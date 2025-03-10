@@ -69,6 +69,40 @@ async function handleSubmit() {
     }
 }
 
+// Theme toggle functionality
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+themeToggleBtn.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+
+    // Add dark mode class to necessary elements
+    const elements = [
+        document.getElementById('chat-container'),
+        document.getElementById('input-container'),
+        document.getElementById('userInput'),
+        document.getElementById('submitBtn'),
+        document.getElementById('mode-selector'),
+        document.getElementById('mode'),
+        themeToggleBtn
+    ];
+
+    elements.forEach(element => {
+        element.classList.toggle('dark-mode');
+    });
+
+    // Get all messages and toggle dark mode class
+    const messages = document.querySelectorAll('.message');
+    messages.forEach(message => {
+        message.classList.toggle('dark-mode');
+    });
+
+    // Update button text based on current theme
+    if (document.body.classList.contains('dark-mode')) {
+        themeToggleBtn.textContent = 'Switch to Light Mode';
+    } else {
+        themeToggleBtn.textContent = 'Switch to Dark Mode';
+    }
+});
+
 // Event listener for the submit button
 document.getElementById('submitBtn').addEventListener('click', handleSubmit);
 

@@ -7,6 +7,12 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
+    transition: background-color 0.3s, color 0.3s; /* Smooth transition for dark mode */
+}
+
+body.dark-mode {
+    background-color: #333;
+    color: #000000;
 }
 
 /* Chat Wrapper */
@@ -31,6 +37,12 @@ body {
     flex-direction: column;
 }
 
+/* Dark mode for chat container */
+#chat-container.dark-mode {
+    background-color: #444;
+    color: #000000;
+}
+
 /* Message Styling */
 .message {
     max-width: 80%;
@@ -45,9 +57,20 @@ body {
     color: white;
 }
 
+/* Dark mode for user messages */
+.message.user.dark-mode {
+    background-color: #005bb5;
+}
+
 .message.bot {
     align-self: flex-start;
     background-color: #f0f0f0; /* Bot message color */
+}
+
+/* Dark mode for bot messages */
+.message.bot.dark-mode {
+    background-color: #666;
+    color: #fff;
 }
 
 /* Input Container */
@@ -57,11 +80,24 @@ body {
     background-color: #ffffff;
 }
 
+/* Dark mode for input container */
+#input-container.dark-mode {
+    background-color: #444;
+}
+
 #userInput {
     flex-grow: 1;
     padding: 10px;
     border-radius: 5px;
     border: 1px solid #ccc;
+    color: #000; /* Ensure text color is visible in both modes */
+}
+
+/* Dark mode for input field */
+#userInput.dark-mode {
+    background-color: #666;
+    color: #fff;
+    border-color: #555;
 }
 
 #submitBtn {
@@ -78,12 +114,23 @@ body {
     background-color: #005bb5; /* Hover effect */
 }
 
+/* Dark mode for submit button */
+#submitBtn.dark-mode {
+    background-color: #005bb5;
+}
+
 /* Mode Selector */
 #mode-selector {
     background-color: #ffffff;
     padding: 10px;
     border-bottom: 1px solid #ccc;
     text-align: center;
+}
+
+/* Dark mode for mode selector */
+#mode-selector.dark-mode {
+    background-color: #444;
+    border-color: #555;
 }
 
 #mode-selector label {
@@ -94,4 +141,26 @@ body {
     padding: 5px;
     border-radius: 5px;
     border: 1px solid #ccc;
+    color: #000; /* Ensure text color is visible in both modes */
+}
+
+/* Dark mode for mode selector */
+#mode.dark-mode {
+    background-color: #666;
+    color: #fff;
+    border-color: #555;
+}
+
+#themeToggleBtn {
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+}
+
+/* Dark mode for theme toggle button */
+#themeToggleBtn.dark-mode {
+    background-color: #666;
+    color: #fff;
+    border-color: #555;
 }
