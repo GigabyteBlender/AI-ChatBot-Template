@@ -83,8 +83,8 @@ function applyDarkMode() {
     document.getElementById('input-container'),
     document.getElementById('userInput'),
     document.getElementById('mode-selector'),
-    document.getElementById('body'),
     document.getElementById('mode'),
+    document.getElementById('settingsBtn'),
   ];
 
   elements.forEach(element => {

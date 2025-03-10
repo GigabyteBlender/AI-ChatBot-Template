@@ -43,11 +43,13 @@ document.getElementById('exitBtn').addEventListener('click', () => {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
       document.body.classList.add('dark-mode');
+
       const elements = [
         document.getElementById('settings-wrapper'),
         document.getElementById('exitBtn'),
         document.getElementById('themeToggleBtn')
       ];
+      
       elements.forEach(toggleDarkModeClass);
       themeToggleBtn.textContent = 'Switch to Light Mode';
     }
