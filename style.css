@@ -43,6 +43,24 @@ body.dark-mode {
     color: #000000;
 }
 
+/* Chat Container */
+#settings-wrapper {
+    flex-grow: 1;
+    background-color: #ffffff;
+    margin-top: 20px;
+    margin-bottom: auto;
+    padding: 200px;
+    overflow-y: auto;
+    display: auto;
+    flex-direction: column;
+}
+
+/* Dark mode for chat container */
+#settings-wrapper.dark-mode {
+    background-color: #444;
+    color: #d2d2d2;
+}
+
 /* Message Styling */
 .message {
     max-width: 80%;
@@ -111,12 +129,7 @@ body.dark-mode {
 }
 
 #submitBtn:hover {
-    background-color: #005bb5; /* Hover effect */
-}
-
-/* Dark mode for submit button */
-#submitBtn.dark-mode {
-    background-color: #005bb5;
+    background-color: #004c98; /* Hover effect */
 }
 
 /* Mode Selector */
@@ -131,6 +144,7 @@ body.dark-mode {
 #mode-selector.dark-mode {
     background-color: #444;
     border-color: #555;
+    color: white;
 }
 
 #mode-selector label {
@@ -154,8 +168,13 @@ body.dark-mode {
 #themeToggleBtn {
     padding: 5px;
     border-radius: 5px;
+    background-color: #ffffff;
     border: 1px solid #ccc;
     cursor: pointer;
+}
+
+#themeToggleBtn:hover {
+    background-color: #d3d3d3; /* Hover effect */
 }
 
 /* Dark mode for theme toggle button */
@@ -163,4 +182,55 @@ body.dark-mode {
     background-color: #666;
     color: #fff;
     border-color: #555;
+}
+
+/* Dark mode for theme toggle button */
+#themeToggleBtn.dark-mode:hover {
+    background-color: #3c3c3c;
+}
+
+#settingsBtn {
+    padding: 5px;
+    border-radius: 5px;
+    background-color: #ffffff;
+    border: 1px solid #ccc;
+    cursor: pointer;
+}
+
+#settingsBtn:hover {
+    background-color: #a5a5a5; /* Hover effect */
+}
+
+/* Dark mode for theme toggle button */
+#settingsBtn.dark-mode {
+    background-color: #666;
+    color: #fff;
+    border-color: #555;
+}
+
+#settingsBtn.dark-mode:hover {
+    background-color: #4a4a4a;
+}
+
+#exitBtn {
+    padding: 5px;
+    border-radius: 5px;
+    background-color: #ffffff;
+    border: 1px solid #ccc;
+    cursor: pointer;
+}
+
+#exitBtn:hover {
+    background-color: #a5a5a5; /* Hover effect */
+}
+
+/* Dark mode for theme toggle button */
+#exitBtn.dark-mode {
+    background-color: #666;
+    color: #fff;
+    border-color: #555;
+}
+
+#exitBtn.dark-mode:hover {
+    background-color: #4a4a4a;
 }
