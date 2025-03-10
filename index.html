@@ -3,15 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Wrapper</title>
+    <title>AI Chatbot</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="app">
-        <h1>AI Wrapper</h1>
-        <textarea id="userInput" placeholder="Enter your prompt here"></textarea>
-        <button id="submitBtn">Generate</button>
-        <div id="output"></div>
+    <div id="chat-wrapper">
+        <div id="mode-selector">
+            <label for="mode">Mode:</label>
+            <select id="mode">
+                <option value="api">API Mode</option>
+                <option value="random">Random Bot Mode</option>
+            </select>
+            <button id="themeToggleBtn">Switch to Dark Mode</button>
+        </div>
+        <div id="chat-container">
+            <!-- Messages will be dynamically added here -->
+        </div>
+        <div id="input-container">
+            <textarea id="userInput" placeholder="Type your message..."></textarea>
+            <button id="submitBtn">Send</button>
+        </div>
     </div>
     <script src="script.js"></script>
 </body>

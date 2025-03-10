@@ -1,0 +1,97 @@
+/* General Reset */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Chat Wrapper */
+#chat-wrapper {
+    width: 100%;
+    max-width: 600px;
+    height: 90vh;
+    display: flex;
+    flex-direction: column;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Chat Container */
+#chat-container {
+    flex-grow: 1;
+    background-color: #ffffff;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Message Styling */
+.message {
+    max-width: 80%;
+    margin-bottom: 10px;
+    padding: 10px 15px;
+    border-radius: 15px;
+}
+
+.message.user {
+    align-self: flex-end;
+    background-color: #0078D7; /* User message color */
+    color: white;
+}
+
+.message.bot {
+    align-self: flex-start;
+    background-color: #f0f0f0; /* Bot message color */
+}
+
+/* Input Container */
+#input-container {
+    display: flex;
+    padding: 10px;
+    background-color: #ffffff;
+}
+
+#userInput {
+    flex-grow: 1;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+#submitBtn {
+    margin-left: 10px;
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: none;
+    background-color: #0078D7; /* Button color */
+    color: white;
+    cursor: pointer;
+}
+
+#submitBtn:hover {
+    background-color: #005bb5; /* Hover effect */
+}
+
+/* Mode Selector */
+#mode-selector {
+    background-color: #ffffff;
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+    text-align: center;
+}
+
+#mode-selector label {
+    margin-right: 10px;
+}
+
+#mode {
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
