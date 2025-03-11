@@ -1,7 +1,7 @@
-/**
- * @fileOverview This script handles chat interactions, utilizing the OpenRouter AI API or random responses based on user-selected mode.
- * It supports light and dark themes and persists user settings across sessions.
- */
+// Description: This script file contains the main functionality for the chat application.
+// It includes functions to call the OpenAI API, generate random responses, add messages to the chat interface,
+// handle user input submission, and apply dark mode to the chat elements.
+// The script also initializes the chat application by setting up event listeners and applying the saved theme and mode.
 
 import { config } from './config.js';
 
@@ -175,6 +175,15 @@ async function handleSubmit() {
         submitBtn.disabled = false;
     }
 }
+
+/**
+ * If the clear button is clicked, clear the chat container.
+ */
+const clearBtn = document.getElementById('clearBtn');
+clearBtn.addEventListener('click', () => {
+    const chatContainer = document.getElementById('chat-container');
+    chatContainer.innerHTML = '';
+});
 
 /**
  * Applies or removes dark mode from specified elements.
