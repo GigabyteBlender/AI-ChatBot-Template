@@ -1,12 +1,11 @@
 /* General Reset */
 body {
-    margin: 0;
     font-family: Arial, sans-serif;
     background-color: #f4f4f9;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    height: 98vh;
     transition: background-color 0.3s, color 0.3s; /* Smooth transition for dark mode */
 }
 
@@ -15,11 +14,55 @@ body.dark-mode {
     color: #000000;
 }
 
+#sidebar {
+    width: 20%;
+    height: 96vh;
+    display: flex;
+    margin-right: 3%;
+    align-items: center;
+    padding: 0% 2%;
+    flex-direction: column;
+    background-color: #ffffff;
+    color: #333; /* Darker text for better readability in light mode */
+    border-radius: 10px;
+    border: none;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+#sidebar.dark-mode {
+    background-color: #444;
+    color: #d2d2d2;
+    border: 1px solid #555; /* Darker border for dark mode */
+}
+
+.side-button {
+    padding: 5px 10px; /* Reduced padding */
+    margin-bottom: 5px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    color: #000;
+    cursor: pointer;
+    width: 80%; /* Added width */
+    align-self: center;
+}
+
+.side-button.dark-mode {
+    background-color: #666;
+    color: #fff;
+    border-color: #555;
+}
+
+.side-button:hover {
+    background-color: #e0e0e0;
+}
+
 /* Chat Wrapper */
 #chat-wrapper {
     width: 100%;
-    max-width: 600px;
-    height: 90vh;
+    max-width: 70%;
+    height: 99%;
     display: flex;
     flex-direction: column;
     border-radius: 10px;
@@ -32,6 +75,8 @@ body.dark-mode {
     flex-grow: 1;
     background-color: #ffffff;
     padding: 20px;
+    margin-left: none;
+    margin-right: none;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -216,7 +261,7 @@ body.dark-mode {
 #clearBtn {
     padding: 5px;
     border-radius: 5px;
-    margin-left: 20%;
+    margin-left: 35%;
     background-color: #ffffff;
     border: 1px solid #ccc;
     cursor: pointer;

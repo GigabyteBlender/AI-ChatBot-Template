@@ -197,8 +197,14 @@ function applyDarkMode() {
         document.getElementById('mode-selector'),
         document.getElementById('mode'),
         document.getElementById('settingsBtn'),
-        document.getElementById('clearBtn')
+        document.getElementById('clearBtn'),
+        document.getElementById('sidebar')
     ];
+
+    for (let i = 0; i < document.getElementsByClassName('side-button').length; i++) {
+        elements.push(document.getElementsByClassName('side-button')[i]);
+    }
+    
     elements.forEach(element => {
         if (element) {
             element.classList.toggle('dark-mode', document.body.classList.contains('dark-mode'));
