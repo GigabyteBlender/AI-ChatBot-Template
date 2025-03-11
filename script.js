@@ -28,7 +28,7 @@ async function callAI(prompt) {
         const messages = [
             {
                 role: "system",
-                content: "You are a helpful assistant. Please respond to questions as concisely as possible but make sure to be descriptive in some cases. Aim for direct answers that most people will be able to understand."
+                content: "You are a helpful assistant. Please respond to questions as concisely as possible. Aim for short, direct answers."
             },
             { role: "user", content: prompt }
         ];
@@ -196,6 +196,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.classList.toggle('dark-mode', savedTheme === 'dark');
     applyDarkMode(); // Apply initial dark mode
 
+    // Load saved mode or default to 'api'
+    const savedMode = localStorage.getItem('mode') || 'api';
+    document.getElementById('mode').value = savedMode;
+
     // Event listener for sending a message on clicking the submit button
     document.getElementById('submitBtn').addEventListener('click', handleSubmit);
 
@@ -211,4 +215,17 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('settingsBtn').addEventListener('click', () => {
         window.location.href = 'settings.html';
     });
+
+    // Event listener to save the selected mode when it changes
+    document.getElementById('mode').addEventListener('change', (event) => {
+        localStorage.setItem('mode', event.target.value);
+    });
+});
+
+// Save the theme when it changes
+document.getElementById('themeToggleBtn').addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+    const newTheme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
+    localStorage.setItem('theme', newTheme);
+    applyDarkMode();
 });
