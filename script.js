@@ -17,7 +17,7 @@ if (!config || !config.OPENROUTER_API_KEY) {
  * @param {string} prompt - The user's input message.
  * @returns {Promise} The AI's response or an error message.
  */
-async function callAI(prompt) {
+async function callAI(prompt, temp) {
     const MODEL = 'google/gemini-2.0-flash-lite-preview-02-05:free';
     const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
     try {
@@ -28,7 +28,8 @@ async function callAI(prompt) {
         const messages = [
             {
                 role: "system",
-                content: "You are a helpful assistant. Please respond to questions as concisely as possible. Aim for short, direct answers."
+                temperature: temp,
+                content: "You are a helpful assistant. Please respond to questions as concisely as possible. Aim for short, direct but informative answers."
             },
             { role: "user", content: prompt }
         ];
@@ -108,10 +109,14 @@ async function addMessage(content, sender) {
     }
 
     // Function to simulate typing animation
-    async function typeWriter(text, element, delay = 20) {
+    async function typeWriter(text, element) {
+
         return new Promise((resolve) => {
             let i = 0;
             function type() {
+
+                const delay = localStorage.getItem('speed') || 20;
+
                 if (i < text.length) {
                     element.textContent += text.charAt(i);
                     i++;
@@ -138,9 +143,13 @@ async function addMessage(content, sender) {
  * @function handleSubmit
  */
 async function handleSubmit() {
+    
     const userInput = document.getElementById('userInput');
     const userMessage = userInput.value.trim();
     const submitBtn = document.getElementById('submitBtn');
+
+    //temp of AI response
+    const temperature = localStorage.getItem('temperature') || 1.0;
 
     if (userMessage) {
         addMessage(userMessage, 'user');
@@ -153,7 +162,7 @@ async function handleSubmit() {
         let botResponse;
 
         if (mode === 'api') {
-            botResponse = await callAI(userMessage);
+            botResponse = await callAI(userMessage, temperature.value);
         } else if (mode === 'random') {
             botResponse = getRandomResponse();
         } else {
@@ -179,6 +188,7 @@ function applyDarkMode() {
         document.getElementById('mode-selector'),
         document.getElementById('mode'),
         document.getElementById('settingsBtn'),
+        document.getElementById('clearBtn')
     ];
     elements.forEach(element => {
         if (element) {
@@ -220,12 +230,4 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('mode').addEventListener('change', (event) => {
         localStorage.setItem('mode', event.target.value);
     });
-});
-
-// Save the theme when it changes
-document.getElementById('themeToggleBtn').addEventListener('click', () => {
-    document.body.classList.toggle('dark-mode');
-    const newTheme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
-    localStorage.setItem('theme', newTheme);
-    applyDarkMode();
 });

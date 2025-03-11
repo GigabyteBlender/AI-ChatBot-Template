@@ -193,7 +193,6 @@ body.dark-mode {
 #settingsBtn {
     padding: 5px;
     border-radius: 5px;
-    margin-left: 20%;
     background-color: #ffffff;
     border: 1px solid #ccc;
     cursor: pointer;
@@ -211,6 +210,30 @@ body.dark-mode {
 }
 
 #settingsBtn.dark-mode:hover {
+    background-color: #4a4a4a;
+}
+
+#clearBtn {
+    padding: 5px;
+    border-radius: 5px;
+    margin-left: 20%;
+    background-color: #ffffff;
+    border: 1px solid #ccc;
+    cursor: pointer;
+}
+
+#clearBtn:hover {
+    background-color: #a5a5a5; /* Hover effect */
+}
+
+/* Dark mode for theme toggle button */
+#clearBtn.dark-mode {
+    background-color: #666;
+    color: #fff;
+    border-color: #555;
+}
+
+#clearBtn.dark-mode:hover {
     background-color: #4a4a4a;
 }
 

@@ -6,12 +6,12 @@ This project is a simple web-based chat interface that demonstrates how to integ
 
 ## Key Components
 
-*   **`index.html`**: The main HTML file that sets up the structure of the chat interface, including the input field, chat display area, mode selector, and theme toggle button.
+*   **`index.html`**: The main HTML file that sets up the structure of the chat interface, including the input field, chat display area, mode selector, and theme toggle button as well as some other feautures.
 *   **`style.css`**: The CSS file that styles the chat interface, providing a visually appealing layout and handling the light/dark mode switch.
 *   **`script.js`**: The JavaScript file that contains the logic for handling user input and simulating AI responses. Currently also has a local storage function so that the theme and what model you are using is saved
 *   **`config.js`**: The JavaScript file that holds any private keys
 *   **`settingscript.js`**: The JavaScript file that handles all the settings in the settings window
-*   **`settings.html`**: The settings HTML file that sets up a basic settings menu. Currently only holding the button to change colour theme
+*   **`settings.html`**: The settings HTML file that sets up a basic settings menu. Currently has the temperature for the AI response, how fast the text is displayed in the chat container, and also a button to change between light and dark theme for the website.
 
 ## Learning Objectives
 

@@ -9,7 +9,6 @@ document.getElementById('exitBtn').addEventListener('click', () => {
 });
 
 // Theme toggle functionality
-
 const themeToggleBtn = document.getElementById('themeToggleBtn');
 
 /**
@@ -23,6 +22,19 @@ function toggleDarkModeClass(element) {
     element.classList.toggle('dark-mode');
   }
 }
+
+// Chagning the display speed of the bot output
+const speed = document.getElementById('speed');
+
+speed.addEventListener('change', () => {
+  localStorage.setItem('speed', speed.value);
+});
+
+const temperature = document.getElementById('temperature');
+
+temperature.addEventListener('change', () => {
+  localStorage.setItem('temperature', temperature.value);
+});
 
 /**
  * @description Event listener for the theme toggle button.
@@ -59,6 +71,11 @@ themeToggleBtn.addEventListener('click', () => {
  */
 document.addEventListener('DOMContentLoaded', () => {
   const savedTheme = localStorage.getItem('theme');
+  const temperature = localStorage.getItem('temperature');
+  const speed = localStorage.getItem('speed');
+
+  document.getElementById('temperature').value = temperature;
+  document.getElementById('speed').value = speed;
 
   if (savedTheme === 'dark') {
     document.body.classList.add('dark-mode');
