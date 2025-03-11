@@ -1,12 +1,42 @@
-// script.js
+import {config} from './config.js';
 
-// Simulating an AI API call
+// Function to call the AI API using OpenRouter
+
 async function callAI(prompt) {
-    return new Promise(resolve => {
-        setTimeout(() => {
-            resolve(`AI response to "${prompt}"`);
-        }, 1000);
-    });
+    const MODEL = 'google/gemini-2.0-flash-lite-preview-02-05:free';
+    const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions'; //OpenRouter API Endpoint
+
+    try {
+        const response = await fetch(OPENROUTER_API_URL, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${config.OPENROUTER_API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: MODEL,
+                messages: [{ role: "user", content: prompt }],
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Check for a valid response and extract the message content
+        if (data && data.choices && data.choices.length > 0 && data.choices[0].message && data.choices[0].message.content) {
+            return data.choices[0].message.content;
+        } else {
+            console.error('Unexpected API response format:', data);
+            return "Sorry, I couldn't understand the response.";
+        }
+
+    } catch (error) {
+        console.error('Error calling AI API:', error);
+        return "Sorry, I encountered an error. Please try again.";
+    }
 }
 
 // Generating a random response
