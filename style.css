@@ -476,6 +476,7 @@ input[type="range"] {
     flex-grow: 1;
     height: 5px;
     -webkit-appearance: none;
+    appearance: none;
     background-color: #ddd;
     border-radius: 5px;
     outline: none;
@@ -483,6 +484,7 @@ input[type="range"] {
 
 input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
+    appearance: none;
     width: 18px;
     height: 18px;
     border-radius: 50%;
