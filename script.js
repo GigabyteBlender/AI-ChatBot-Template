@@ -29,7 +29,7 @@ async function callAI(prompt, temp) {
             {
                 role: "system",
                 temperature: temp,
-                content: "You are a helpful assistant. Please respond to questions as concisely as possible. Aim for short, direct but informative answers."
+                content: "You are a helpful assistant. Aim for direct and informative answers."
             },
             { role: "user", content: prompt }
         ];
@@ -184,6 +184,16 @@ clearBtn.addEventListener('click', () => {
     const chatContainer = document.getElementById('chat-container');
     chatContainer.innerHTML = '';
 });
+
+const sidebarToggle = document.getElementById('sidebar-toggle');
+const sidebar = document.getElementById('sidebar');
+const chatWrapper = document.getElementById('chat-wrapper');
+
+sidebarToggle.addEventListener('click', () => {
+  sidebar.classList.toggle('hidden');
+  chatWrapper.classList.toggle('full-width');
+});
+
 
 /**
  * Applies or removes dark mode from specified elements.
