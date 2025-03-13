@@ -29,7 +29,7 @@ async function callAI(prompt, temp) {
             {
                 role: "system",
                 temperature: temp,
-                content: "You are a helpful assistant. Aim for direct and informative answers."
+                content: "You are a helpful assistant. Aim for concise and informative answers."
             },
             { role: "user", content: prompt }
         ];
