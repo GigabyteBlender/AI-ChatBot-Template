@@ -37,7 +37,17 @@ This project can be used as a starting point for:
 Create a file called `config.js` and add the following:
 
 ```javascript
+// config.js - Environment variables should be used instead of hardcoding
 export const config = {
-    OPENROUTER_API_KEY : 'YOUR API KEY HERE'
+    // Use environment variables or a secure method to store API keys
+    // For development, you could use .env files with a package like dotenv
+    OPENROUTER_API_KEY: ''
+};
+
+// For development testing only, never use this in production
+export const getTestKey = () => {
+    // This function should only be used during development
+    console.warn("Using test key - not for production use");
+    return sessionStorage.getItem('temp_dev_key') || '';
 };
 ```

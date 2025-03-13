@@ -5,49 +5,64 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Chatbot</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <meta name="description" content="AI Chat Assistant powered by various language models">
 </head>
 <body>
-    <button id = "sidebar-toggle"></button>
+    <button id="sidebar-toggle" aria-label="Toggle sidebar"></button>
 
-    <div id = "sidebar">
+    <div id="sidebar">
         <h1>AI Chatbot</h1>
-        <br />
-        <button class = "side-button">Button1</button>
-        <button class = "side-button">Button2</button>
-        <button class = "side-button">Button3</button>
-        <button class = "side-button">Button4</button>
-        <button class = "side-button">Button5</button>
-        <button class = "side-button">Button6</button>
+        <button class="side-button new-chat">New Chat</button>
+        <div class="chat-history">
+            <h3>Recent Chats</h3>
+            <ul id="chat-history-list">
+                <!-- Chat history items will be dynamically added here -->
+            </ul>
+        </div>
+        <div class="sidebar-footer">
+            <p>Version 1.1.0</p>
+        </div>
     </div>
-</body>
-
-<body>
     
     <div id="chat-wrapper">
-        
         <div id="mode-selector">
+            <div class="mode-container">
+                <label for="mode">Model:</label>
+                <select id="mode" aria-label="Select AI model">
+                    <option value="api">OpenRouter API</option>
+                    <option value="random">Random Mode</option>
+                </select>
+            </div>
             
-            <label for="mode">Model:</label>
-            <select id="mode">
-                <option value="api">OpenRouter API</option>
-                <option value="random">Random Mode</option>
-            </select>
-            
-            <button id="clearBtn">Clear</button>
-            <button id="settingsBtn"> ☰ </button>        
-
+            <div class="action-buttons">
+                <button id="clearBtn" aria-label="Clear chat">Clear</button>
+                <button id="settingsBtn" aria-label="Settings">⚙️</button>
+            </div>
         </div>
 
-        <div id="chat-container">
-            <!-- Messages will be dynamically added here -->
+        <div id="chat-container" aria-live="polite">
+            <!-- Welcome message -->
+            <div class="message bot">
+                <span>Hello! How can I help you today?</span>
+            </div>
         </div>
 
         <div id="input-container">
-            <textarea id="userInput" placeholder="Type your message..."></textarea>
-            <button id="submitBtn">Send</button>
+            <textarea 
+                id="userInput" 
+                placeholder="Type your message..." 
+                aria-label="Type your message"
+                rows="1"></textarea>
+            <button id="submitBtn" aria-label="Send message">Send</button>
         </div>
-
     </div>
+
+    <!-- Loading indicator -->
+    <div id="loading-indicator" class="hidden">
+        <div class="spinner"></div>
+    </div>
+
     <script type="module" src="script.js"></script>
 </body>
 </html>

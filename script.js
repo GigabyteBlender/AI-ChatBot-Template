@@ -1,87 +1,28 @@
-// Description: This script file contains the main functionality for the chat application.
-// It includes functions to call the OpenAI API, generate random responses, add messages to the chat interface,
-// handle user input submission, and apply dark mode to the chat elements.
-// The script also initializes the chat application by setting up event listeners and applying the saved theme and mode.
-
 import { config } from './config.js';
+import { ApiService } from './services/apiService.js';
+import { UiService } from './services/uiService.js';
+import { ThemeManager } from './services/themeManager.js';
+import { ChatHistoryService } from './services/chatHistoryService.js';
 
-// Check if the OPENROUTER_API_KEY is available, if not, provide a warning.
-if (!config || !config.OPENROUTER_API_KEY) {
-    console.warn("OPENROUTER_API_KEY is not set in config.js. The API mode will not work.");
-}
+// Initialize services
+const apiService = new ApiService(config.OPENROUTER_API_KEY);
+const uiService = new UiService();
+const themeManager = new ThemeManager();
+const chatHistoryService = new ChatHistoryService();
 
-/**
- * Calls the OpenRouter AI API to generate a response based on the user's prompt.
- * @async
- * @function callAI
- * @param {string} prompt - The user's input message.
- * @returns {Promise} The AI's response or an error message.
- */
-async function callAI(prompt, temp) {
-    const MODEL = 'google/gemini-2.0-flash-lite-preview-02-05:free';
-    const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-    try {
-        if (!config.OPENROUTER_API_KEY) {
-            throw new Error("API key is missing. Please set it in config.js.");
-        }
-
-        const messages = [
-            {
-                role: "system",
-                temperature: temp,
-                content: "You are a helpful assistant. Aim for concise and informative answers."
-            },
-            { role: "user", content: prompt }
-        ];
-
-        const response = await fetch(OPENROUTER_API_URL, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${config.OPENROUTER_API_KEY}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: MODEL,
-                messages: messages,
-            }),
-        });
-        if (!response.ok) {
-            //Improved error message
-            const errorData = await response.json();
-            throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.message || 'Unknown error'}`);
-        }
-
-        const data = await response.json();
-        if (data && data.choices && data.choices.length > 0 && data.choices[0].message && data.choices[0].message.content) {
-            return data.choices[0].message.content;
-        } else {
-            console.error('Unexpected API response format:', data);
-            return "Sorry, I couldn't understand the response.";
-        }
-    } catch (error) {
-        console.error('Error calling AI API:', error);
-        return "Sorry, I encountered an error. Please try again.";
-    }
-}
+// Keep track of current chat
+let currentChatId = null;
+let currentChatMessages = [];
 
 /**
- * Provides a random response from a predefined list.
- * @function getRandomResponse
- * @returns {string} A random response string.
+ * Sanitizes a string to prevent XSS attacks
+ * @param {string} str - The string to sanitize
+ * @returns {string} The sanitized string
  */
-function getRandomResponse() {
-    const randomResponses = [
-        "I'm not sure about that.",
-        "Can you tell me more?",
-        "That's interesting!",
-        "Let me think about it...",
-        "I don't have an answer for that right now.",
-        "Why do you ask?",
-        "That's a great question!",
-        "Hmm... I'm not sure."
-    ];
-    const randomIndex = Math.floor(Math.random() * randomResponses.length);
-    return randomResponses[randomIndex];
+function sanitizeHTML(str) {
+    const temp = document.createElement('div');
+    temp.textContent = str;
+    return temp.innerHTML;
 }
 
 /**
@@ -96,6 +37,9 @@ async function addMessage(content, sender) {
     const messageDiv = document.createElement('div');
     messageDiv.classList.add('message', sender);
 
+    // Sanitize the content to prevent XSS attacks
+    const sanitizedContent = sanitizeHTML(content);
+    
     // Create a span to hold the animated text
     const textSpan = document.createElement('span');
     messageDiv.appendChild(textSpan);
@@ -110,14 +54,16 @@ async function addMessage(content, sender) {
 
     // Function to simulate typing animation
     async function typeWriter(text, element) {
-
         return new Promise((resolve) => {
             let i = 0;
             function type() {
-
-                const delay = localStorage.getItem('speed') || 20;
+                const delay = parseInt(localStorage.getItem('speed') || '20', 10);
 
                 if (i < text.length) {
+                    // Use a text node instead of textContent to prevent HTML parsing
+                    if (i === 0) {
+                        element.textContent = '';
+                    }
                     element.textContent += text.charAt(i);
                     i++;
                     setTimeout(type, delay);
@@ -131,10 +77,45 @@ async function addMessage(content, sender) {
 
     // If the sender is the bot, start the typing animation
     if (sender === 'bot') {
-        await typeWriter(content, textSpan);
+        await typeWriter(sanitizedContent, textSpan);
     } else {
-        textSpan.textContent = content; // Directly set the user's message
+        textSpan.textContent = sanitizedContent; // Directly set the user's message
     }
+    
+    // Add to current chat messages
+    currentChatMessages.push({
+        content: content,
+        sender: sender,
+        timestamp: Date.now()
+    });
+    
+    // Save the updated chat
+    if (currentChatId) {
+        const title = getChatTitle(currentChatMessages);
+        chatHistoryService.saveChat(currentChatId, title, currentChatMessages);
+    }
+}
+
+/**
+ * Generate a title for the chat based on the first user message
+ * @param {Array} messages - Array of message objects
+ * @returns {string} A title for the chat
+ */
+function getChatTitle(messages) {
+    if (!messages || messages.length === 0) {
+        return "New Chat";
+    }
+    
+    // Find the first user message
+    const firstUserMessage = messages.find(msg => msg.sender === 'user');
+    if (firstUserMessage) {
+        // Create a short title from the first message
+        return firstUserMessage.content.length > 20 
+            ? firstUserMessage.content.substring(0, 17) + '...'
+            : firstUserMessage.content;
+    }
+    
+    return "New Chat";
 }
 
 /**
@@ -143,116 +124,247 @@ async function addMessage(content, sender) {
  * @function handleSubmit
  */
 async function handleSubmit() {
-    
     const userInput = document.getElementById('userInput');
     const userMessage = userInput.value.trim();
     const submitBtn = document.getElementById('submitBtn');
 
-    //temp of AI response
-    const temperature = localStorage.getItem('temperature') || 1.0;
+    if (!userMessage) return;
 
-    if (userMessage) {
-        addMessage(userMessage, 'user');
-        userInput.value = '';
+    // Ensure we have a chat ID for this conversation
+    if (!currentChatId) {
+        startNewChat();
+    }
 
-        // Disable the submit button
-        submitBtn.disabled = true;
+    // Add user message to chat
+    await addMessage(userMessage, 'user');
+    userInput.value = '';
 
-        const mode = document.getElementById('mode').value;
-        let botResponse;
+    // Disable the submit button
+    submitBtn.disabled = true;
 
+    // Get response based on selected mode
+    const mode = document.getElementById('mode').value;
+    const temperature = parseFloat(localStorage.getItem('temperature') || '1.0');
+    let botResponse;
+
+    try {
         if (mode === 'api') {
-            botResponse = await callAI(userMessage, temperature.value);
+            botResponse = await apiService.getCompletion(userMessage, temperature);
         } else if (mode === 'random') {
-            botResponse = getRandomResponse();
+            botResponse = apiService.getRandomResponse();
         } else {
             botResponse = "Please select a valid mode.";
         }
-
-        await addMessage(botResponse, 'bot');
-
-        // Re-enable the submit button after the bot's response is added
-        submitBtn.disabled = false;
+    } catch (error) {
+        console.error('Error getting response:', error);
+        botResponse = "Sorry, I encountered an error. Please try again.";
     }
+
+    // Add bot response to chat
+    await addMessage(botResponse, 'bot');
+
+    // Re-enable the submit button
+    submitBtn.disabled = false;
 }
 
 /**
- * If the clear button is clicked, clear the chat container.
+ * Starts a new chat conversation
  */
-const clearBtn = document.getElementById('clearBtn');
-clearBtn.addEventListener('click', () => {
+function startNewChat() {
+    // Clear the chat interface
+    document.getElementById('chat-container').innerHTML = `
+        <div class="message bot">
+            <span>Hello! How can I help you today?</span>
+        </div>
+    `;
+    
+    // Reset current chat
+    currentChatId = chatHistoryService.generateChatId();
+    currentChatMessages = [
+        {
+            content: "Hello! How can I help you today?",
+            sender: "bot",
+            timestamp: Date.now()
+        }
+    ];
+    
+    // Save the new chat
+    chatHistoryService.saveChat(currentChatId, "New Chat", currentChatMessages);
+    
+    // Update the sidebar
+    updateChatHistorySidebar();
+}
+
+/**
+ * Loads a chat from history
+ * @param {string} chatId - The ID of the chat to load
+ */
+function loadChat(chatId) {
+    const chat = chatHistoryService.getChat(chatId);
+    if (!chat) return;
+    
+    // Set as current chat
+    currentChatId = chatId;
+    currentChatMessages = chat.messages;
+    
+    // Clear the chat container
     const chatContainer = document.getElementById('chat-container');
     chatContainer.innerHTML = '';
-});
-
-const sidebarToggle = document.getElementById('sidebar-toggle');
-const sidebar = document.getElementById('sidebar');
-const chatWrapper = document.getElementById('chat-wrapper');
-
-sidebarToggle.addEventListener('click', () => {
-  sidebar.classList.toggle('hidden');
-  chatWrapper.classList.toggle('full-width');
-});
-
+    
+    // Add each message to the chat interface
+    chat.messages.forEach(msg => {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', msg.sender);
+        
+        // Apply dark mode class if necessary
+        if (document.body.classList.contains('dark-mode')) {
+            messageDiv.classList.add('dark-mode');
+        }
+        
+        const textSpan = document.createElement('span');
+        textSpan.textContent = msg.content;
+        messageDiv.appendChild(textSpan);
+        
+        chatContainer.appendChild(messageDiv);
+    });
+    
+    // Scroll to the bottom
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    
+    // Update sidebar to highlight this chat
+    updateChatHistorySidebar();
+}
 
 /**
- * Applies or removes dark mode from specified elements.
- * @function applyDarkMode
+ * Updates the chat history sidebar with the latest chats
  */
-function applyDarkMode() {
-    const elements = [
-        document.getElementById('chat-container'),
-        document.getElementById('input-container'),
-        document.getElementById('userInput'),
-        document.getElementById('mode-selector'),
-        document.getElementById('mode'),
-        document.getElementById('settingsBtn'),
-        document.getElementById('clearBtn'),
-        document.getElementById('sidebar')
-    ];
-
-    for (let i = 0; i < document.getElementsByClassName('side-button').length; i++) {
-        elements.push(document.getElementsByClassName('side-button')[i]);
+function updateChatHistorySidebar() {
+    const historyList = document.getElementById('chat-history-list');
+    historyList.innerHTML = '';
+    
+    const chats = chatHistoryService.getAllChatsSorted();
+    
+    if (chats.length === 0) {
+        const emptyItem = document.createElement('li');
+        emptyItem.textContent = "No chat history";
+        emptyItem.classList.add('empty-history');
+        historyList.appendChild(emptyItem);
+        return;
     }
     
-    elements.forEach(element => {
-        if (element) {
-            element.classList.toggle('dark-mode', document.body.classList.contains('dark-mode'));
+    chats.forEach(chat => {
+        const listItem = document.createElement('li');
+        listItem.textContent = chat.title;
+        listItem.setAttribute('data-chat-id', chat.id);
+        
+        // Highlight the current chat
+        if (chat.id === currentChatId) {
+            listItem.classList.add('active-chat');
         }
+        
+        // Apply dark mode if necessary
+        if (document.body.classList.contains('dark-mode')) {
+            listItem.classList.add('dark-mode');
+        }
+        
+        listItem.addEventListener('click', () => {
+            loadChat(chat.id);
+        });
+        
+        historyList.appendChild(listItem);
     });
 }
 
 /**
- * Initializes the chat application by setting up event listeners and applying the saved theme.
+ * Initializes sidebar
  */
-document.addEventListener('DOMContentLoaded', () => {
-    // Load saved theme or default to 'light'
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    document.body.classList.toggle('dark-mode', savedTheme === 'dark');
-    applyDarkMode(); // Apply initial dark mode
-
-    // Load saved mode or default to 'api'
-    const savedMode = localStorage.getItem('mode') || 'api';
-    document.getElementById('mode').value = savedMode;
-
-    // Event listener for sending a message on clicking the submit button
-    document.getElementById('submitBtn').addEventListener('click', handleSubmit);
-
-    // Event listener for sending a message on pressing 'Enter' (without shift key)
-    document.getElementById('userInput').addEventListener('keypress', (event) => {
-        if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault(); // Prevent default action (new line)
-            handleSubmit(); // Submit the message
+function initSidebar() {
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const sidebar = document.getElementById('sidebar');
+    const chatWrapper = document.getElementById('chat-wrapper');
+    
+    // Simple toggle function that uses a new class name
+    sidebarToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('show-sidebar');
+        chatWrapper.classList.toggle('sidebar-expanded');
+        
+        // Store sidebar state for persistence
+        const isSidebarVisible = sidebar.classList.contains('show-sidebar');
+        localStorage.setItem('sidebarVisible', isSidebarVisible);
+        
+        // Update toggle button position
+        if (isSidebarVisible) {
+            sidebarToggle.style.left = `${parseInt(getComputedStyle(sidebar).width) + 20}px`;
+        } else {
+            sidebarToggle.style.left = '20px';
         }
     });
+    
+    // Restore sidebar state on page load
+    const savedSidebarState = localStorage.getItem('sidebarVisible') === 'true';
+    if (savedSidebarState) {
+        sidebar.classList.add('show-sidebar');
+        chatWrapper.classList.add('sidebar-expanded');
+        sidebarToggle.style.left = `${parseInt(getComputedStyle(sidebar).width) + 20}px`;
+    }
+    
+    // Initialize chat history in sidebar
+    updateChatHistorySidebar();
+    
+    // Set up listener for history changes
+    document.addEventListener('chatHistoryChanged', updateChatHistorySidebar);
+    
+    // Set up new chat button
+    const newChatBtn = document.querySelector('.new-chat');
+    newChatBtn.addEventListener('click', startNewChat);
+}
 
-    // Event listener to navigate to the settings page
+/**
+ * Initializes the chat application.
+ */
+function initApp() {
+    // Initialize theme
+    themeManager.initTheme();
+    
+    // Load saved mode
+    const savedMode = localStorage.getItem('mode') || 'api';
+    document.getElementById('mode').value = savedMode;
+    
+    // Set up event listeners
+    document.getElementById('submitBtn').addEventListener('click', handleSubmit);
+    
+    document.getElementById('userInput').addEventListener('keypress', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            handleSubmit();
+        }
+    });
+    
     document.getElementById('settingsBtn').addEventListener('click', () => {
         window.location.href = 'settings.html';
     });
-
-    // Event listener to save the selected mode when it changes
+    
     document.getElementById('mode').addEventListener('change', (event) => {
         localStorage.setItem('mode', event.target.value);
     });
-});
+    
+    document.getElementById('clearBtn').addEventListener('click', () => {
+        startNewChat();
+    });
+    
+    // Initialize sidebar
+    initSidebar();
+    
+    // Start a new chat session or load the last chat
+    const chatHistory = chatHistoryService.getAllChatsSorted();
+    if (chatHistory.length > 0) {
+        // Load the most recent chat
+        loadChat(chatHistory[0].id);
+    } else {
+        // Start a new chat
+        startNewChat();
+    }
+}
+
+// Initialize the app when DOM content is loaded
+document.addEventListener('DOMContentLoaded', initApp);

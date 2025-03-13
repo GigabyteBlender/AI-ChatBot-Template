@@ -3,28 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings</title>
+    <title>Chat Settings</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="favicon.png">
 </head>
 <body>
     <div id="settings-wrapper">
-
-        <h1>Settings</h1>
-
-        <button id="themeToggleBtn">Switch to Dark Mode</button>
-            <br>
-            <br>
-        <label for="temperature">Temperature:</label>
-        <input type="range" id="temperature" min="0" max="2" step="0.1" value="1">
-            <br>
-            <br>
-        <label for="speed">Delay:</label>
-        <input type="range" id="speed" min="5" max="50" value="20">
-            <br>
-            <br>
-        <button id="exitBtn">Exit</button>
-
+        <h1>Chat Settings</h1>
+        
+        <div class="settings-group">
+            <h2>Appearance</h2>
+            <button id="themeToggleBtn" class="settings-button">Switch to Dark Mode</button>
+        </div>
+        
+        <div class="settings-group">
+            <h2>Chat Experience</h2>
+            <div class="settings-control">
+                <label for="temperature">Response Creativity:</label>
+                <div class="range-container">
+                    <input type="range" id="temperature" min="0" max="2" step="0.1" value="1.0">
+                    <span id="temperature-value">1.0</span>
+                </div>
+                <p class="setting-description">Higher values produce more creative and varied responses.</p>
+            </div>
+            
+            <div class="settings-control">
+                <label for="speed">Typing Speed (Delay):</label>
+                <div class="range-container">
+                    <input type="range" id="speed" min="5" max="50" step="1" value="20">
+                    <span id="speed-value">20ms</span>
+                </div>
+                <p class="setting-description">Lower values make bot responses appear faster.</p>
+            </div>
+        </div>
+        
+        <div class="settings-group">
+            <h2>API Configuration</h2>
+            <div class="settings-control">
+                <label for="api-model">API Model:</label>
+                <select id="api-model" class="settings-select">
+                    <option value="google/gemini-2.0-flash-lite-preview-02-05:free">Gemini 2.0 Flash (Free)</option>
+                    <option value="anthropic/claude-3-sonnet">Claude 3 Sonnet</option>
+                    <option value="anthropic/claude-3-haiku">Claude 3 Haiku</option>
+                </select>
+            </div>
+        </div>
+        
+        <button id="exitBtn" class="settings-button-primary">Save & Return to Chat</button>
     </div>
-    <script src="settingscript.js"></script>
+    
+    <script type="module" src="settings.js"></script>
 </body>
 </html>
