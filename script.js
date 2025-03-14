@@ -257,6 +257,21 @@ function updateChatHistorySidebar() {
         listItem.textContent = chat.title;
         listItem.setAttribute('data-chat-id', chat.id);
         
+        // Create delete button
+        const deleteBtn = document.createElement('button');
+        deleteBtn.classList.add('chat-delete-btn');
+        deleteBtn.innerHTML = '×'; // × symbol for delete
+        deleteBtn.setAttribute('aria-label', 'Delete chat');
+        
+        // Add event listener to delete button
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent the click from bubbling up to the list item
+            deleteChat(chat.id);
+        });
+        
+        // Append delete button to list item
+        listItem.appendChild(deleteBtn);
+        
         // Highlight the current chat
         if (chat.id === currentChatId) {
             listItem.classList.add('active-chat');
@@ -265,6 +280,7 @@ function updateChatHistorySidebar() {
         // Apply dark mode if necessary
         if (document.body.classList.contains('dark-mode')) {
             listItem.classList.add('dark-mode');
+            deleteBtn.classList.add('dark-mode');
         }
         
         listItem.addEventListener('click', () => {
@@ -273,6 +289,23 @@ function updateChatHistorySidebar() {
         
         historyList.appendChild(listItem);
     });
+}
+
+/**
+ * Delete a chat and update the UI
+ * @param {string} chatId - The ID of the chat to delete
+ */
+function deleteChat(chatId) {
+    // Delete the chat from storage
+    chatHistoryService.deleteChat(chatId);
+    
+    // If the deleted chat was the current chat, start a new one
+    if (chatId === currentChatId) {
+        startNewChat();
+    }
+    
+    // Update the sidebar
+    updateChatHistorySidebar();
 }
 
 /**
