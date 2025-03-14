@@ -85,7 +85,7 @@ export const getTestKey = () => {
 ## Future Improvements
 
 * Add user authentication for personalized experiences
-* Implement cloud storage for chat history
+* Implement database for chat history (currently using local storage)
 * Add support for file uploads and attachments
 * Implement conversation summarization
 * Add export functionality for chat logs

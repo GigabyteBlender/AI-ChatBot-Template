@@ -593,6 +593,32 @@ function initSidebar() {
         sidebar.classList.toggle('hidden-sidebar');
         chatWrapper.classList.toggle('full-width');
         body.classList.toggle('sidebar-hidden');
+
+        // Get current state
+        const isSidebarHidden = document.body.classList.contains('sidebar-hidden');
+        
+        // Add transition class
+        this.style.transition = "transform 0.5s ease, left 0.5s ease, right 0.5s ease";
+        
+        // If we're on mobile, add a sliding animation
+        if (window.innerWidth <= 768) {
+            if (isSidebarHidden) {
+            // Sidebar will become visible, slide button to right
+            this.style.transform = "translateX(100vw)";
+            } else {
+            // Sidebar will be hidden, slide button to left
+            this.style.transform = "translateX(-100vw)";
+            }
+            
+            // After a small delay, toggle the sidebar and reset the button
+            setTimeout(() => {
+            document.body.classList.toggle('sidebar-hidden');
+            this.style.transform = "";
+            }, 250);
+        } else {
+            // On desktop, just toggle normally
+            document.body.classList.toggle('sidebar-hidden');
+        }
         
         // Store sidebar state for persistence
         const isHidden = sidebar.classList.contains('hidden-sidebar');

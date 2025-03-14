@@ -65,6 +65,13 @@
     background-color: var(--primary-hover);
   }
   
+  /* For the sidebar-hidden state transition */
+  body.sidebar-hidden #sidebar-toggle {
+    left: 20px;
+    transition: all 0.3s ease, left 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+  }
+
+  /* For the sidebar-visible state transition */
   body:not(.sidebar-hidden) #sidebar-toggle {
     left: calc(var(--sidebar-width) + 10px);
   }
@@ -765,3 +772,52 @@
     animation: spin 1.2s linear infinite;
   }
   
+  @media (min-width: 769px) {
+    body:not(.sidebar-hidden) #sidebar-toggle {
+      left: calc(var(--sidebar-width) + 10px);
+    }
+  }
+
+  /* Position when sidebar is visible - mobile */
+  @media (max-width: 768px) {
+    /* When sidebar is visible, position button at right side */
+    body:not(.sidebar-hidden) #sidebar-toggle {
+      left: auto;
+      right: 20px;
+    }
+    
+    /* Add transition animations */
+    body.sidebar-hidden #sidebar-toggle {
+      transform: translateX(0);
+      transition: transform 0.5s ease;
+    }
+    
+    body:not(.sidebar-hidden) #sidebar-toggle {
+      transform: translateX(0);
+      transition: transform 0.5s ease;
+    }
+
+    .message {
+      max-width: 80%;
+      margin-left: 5px;
+      margin-right: 5px;
+    }
+    
+    /* Hide main content when sidebar is open on mobile */
+    body:not(.sidebar-hidden) #chat-wrapper {
+      display: none;
+    }
+    
+    /* Make sidebar take full width on mobile */
+    #sidebar {
+      width: 100%;
+    }
+
+    /* When typing starts, ensure all chat elements remain visible */
+    body.typing #mode-selector,
+    body.typing #chat-container,
+    body.typing #input-container {
+      display: flex !important;
+    }
+ 
+  }
