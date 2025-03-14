@@ -240,8 +240,66 @@ function processParagraphs(html) {
 }
 
 /**
+ * Attaches click event listeners to all code copy buttons in the chat
+ */
+function attachCodeCopyListeners() {
+    // Find all copy buttons in the chat container
+    const copyButtons = document.querySelectorAll('.code-copy-btn');
+    
+    // Add click event listener to each button
+    copyButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Find the closest code block
+            const codeBlock = this.closest('.code-block');
+            
+            // Get the code content
+            const codeElement = codeBlock.querySelector('code');
+            const codeText = codeElement.textContent;
+            
+            // Copy to clipboard
+            navigator.clipboard.writeText(codeText)
+                .then(() => {
+                    // Show feedback that code was copied
+                    const originalText = this.textContent;
+                    this.textContent = 'Copied!';
+                    
+                    // Reset button text after a delay
+                    setTimeout(() => {
+                        this.textContent = originalText;
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error('Failed to copy text: ', err);
+                    // Show error feedback
+                    this.textContent = 'Failed!';
+                    setTimeout(() => {
+                        this.textContent = 'Copy';
+                    }, 2000);
+                });
+        });
+    });
+}
+
 /**
- * Adds a message to the chat container with the appropriate styling and typing animation.
+ * Scrolls the chat container to the bottom
+ * @param {boolean} smooth - Whether to use smooth scrolling animation
+ */
+function scrollToBottom(smooth = false) {
+    const chatContainer = document.getElementById('chat-container');
+    
+    // Use smooth scrolling if specified, otherwise instant scroll
+    if (smooth) {
+        chatContainer.scrollTo({
+            top: chatContainer.scrollHeight,
+            behavior: 'smooth'
+        });
+    } else {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+}
+
+/**
+ * Adds a message to the chat container with the appropriate styling and ensures proper scrolling.
  * @async
  * @function addMessage
  * @param {string} content - The message content.
@@ -259,8 +317,8 @@ async function addMessage(content, sender) {
 
     chatContainer.appendChild(messageDiv);
     
-    // Scroll to the bottom of the chat container
-    chatContainer.scrollTop = chatContainer.scrollHeight;
+    // Initial scroll to bottom (might be incomplete with complex content)
+    scrollToBottom();
     
     // If the sender is the bot, convert markdown to HTML
     if (sender === 'bot') {
@@ -270,6 +328,9 @@ async function addMessage(content, sender) {
         // Set the HTML content
         contentContainer.innerHTML = htmlContent;
         
+        // Attach click event listeners to code copy buttons
+        attachCodeCopyListeners();
+        
         // Apply fade-in animation
         const pxContent = contentContainer.querySelector('.px-content');
         if (pxContent) {
@@ -277,11 +338,20 @@ async function addMessage(content, sender) {
             setTimeout(() => {
                 pxContent.style.opacity = '1';
                 pxContent.style.transition = 'opacity 0.3s ease-in-out';
+                
+                // Scroll again after content is fully rendered
+                scrollToBottom();
             }, 50);
         }
+        
+        // Final scroll after all content and images might have loaded
+        setTimeout(() => {
+            scrollToBottom(true);
+        }, 100);
     } else {
         // For user messages, just display as plain text
         contentContainer.textContent = content;
+        scrollToBottom(true);
     }
     
     // Add to current chat messages
@@ -297,7 +367,6 @@ async function addMessage(content, sender) {
         chatHistoryService.saveChat(currentChatId, title, currentChatMessages);
     }
 }
-
 /**
  * Loads a chat from history
  * @param {string} chatId - The ID of the chat to load
@@ -333,8 +402,13 @@ function loadChat(chatId) {
         chatContainer.appendChild(messageDiv);
     });
     
-    // Scroll to the bottom
-    chatContainer.scrollTop = chatContainer.scrollHeight;
+    // Attach click event listeners to code copy buttons
+    attachCodeCopyListeners();
+    
+    // Ensure scroll to bottom after everything is loaded
+    setTimeout(() => {
+        scrollToBottom(true);
+    }, 100);
     
     // Update sidebar to highlight this chat
     updateChatHistorySidebar();
