@@ -3,7 +3,7 @@ export class ApiService {
     constructor(apiKey) {
         this.apiKey = apiKey;
         this.API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-        this.MODEL = 'google/gemini-2.0-flash-lite-preview-02-05:free';
+        this.MODEL = localStorage.getItem('model') || 'google/gemini-2.0-flash-lite-preview-02-05:free';
     }
 
     /**

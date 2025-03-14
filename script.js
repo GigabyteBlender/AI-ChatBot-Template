@@ -610,11 +610,12 @@ function initSidebar() {
     newChatBtn.addEventListener('click', startNewChat);
 }
 
+
 /**
  * Initializes the chat application.
  */
 function initApp() {
-    
+
     // Load saved mode
     const savedMode = localStorage.getItem('mode') || 'api';
     document.getElementById('mode').value = savedMode;

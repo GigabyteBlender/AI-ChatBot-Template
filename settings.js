@@ -1,7 +1,7 @@
 class SettingsManager {
     constructor() {
         this.exitBtn = document.getElementById('exitBtn');
-        this.themeToggleBtn = document.getElementById('themeToggleBtn');
+        this.aiModel = document.getElementById('api-model');
         this.speedInput = document.getElementById('speed');
         this.temperatureInput = document.getElementById('temperature');
         this.temperatureValue = document.getElementById('temperature-value');
@@ -29,12 +29,17 @@ class SettingsManager {
             localStorage.setItem('temperature', this.temperatureInput.value);
             this.temperatureValue.textContent = this.temperatureInput.value;
         });
+
+        this.aiModel.addEventListener('change', (event) => {
+            localStorage.setItem('model', event.target.value);
+        });
     }
     
     loadSavedSettings() {
         // Load saved speed and temperature
         const savedSpeed = localStorage.getItem('speed') || '20';
         const savedTemperature = localStorage.getItem('temperature') || '1.0';
+        const savedModel = localStorage.getItem('model') || 'google/gemini-2.0-flash-lite-preview-02-05:free';
         
         this.speedInput.value = savedSpeed;
         this.temperatureInput.value = savedTemperature;
@@ -42,6 +47,9 @@ class SettingsManager {
         // Update display values
         this.speedValue.textContent = `${savedSpeed}ms`;
         this.temperatureValue.textContent = savedTemperature;
+        
+        //update what the current model is
+        this.aiModel.value = savedModel;
     }
 }
 
