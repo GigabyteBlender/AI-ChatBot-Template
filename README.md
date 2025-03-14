@@ -44,7 +44,7 @@ This project is a modern web-based chat interface that integrates with AI servic
 ### Settings
 * Adjustable typing speed for bot responses
 * Controllable response creativity through temperature setting 
-* Model selection options (currently 5 different model to choose from)
+* Model selection options. Current models to choose from:
 
 ```text
 Gemini 2.0 Flash,
