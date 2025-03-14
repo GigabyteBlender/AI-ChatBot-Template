@@ -54,7 +54,7 @@
     z-index: 1000;
     cursor: pointer;
     transition: all 0.3s ease;
-    background-image: url('assests/sidebar-icon.png');
+    background-image: url('assets/sidebar-icon.png');
     background-position: center;
     background-repeat: no-repeat;
     background-size: 24px;
