@@ -615,6 +615,7 @@ function initSidebar() {
             document.body.classList.toggle('sidebar-hidden');
             this.style.transform = "";
             }, 250);
+            
         } else {
             // On desktop, just toggle normally
             document.body.classList.toggle('sidebar-hidden');
