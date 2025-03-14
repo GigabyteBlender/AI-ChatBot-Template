@@ -36,10 +36,16 @@ function markdownToHTML(markdown) {
     // Preserve line breaks for processing
     html = html.replace(/\r\n/g, '\n');
     
-    // Convert code blocks with language support
+    // Process code blocks FIRST, before any other markdown processing
+    // This will convert them to HTML elements that won't be affected by subsequent processing
     html = html.replace(/```(.*?)\n([\s\S]*?)```/g, function(match, language, code) {
         // Trim trailing newlines from code
         code = code.replace(/\n+$/, '');
+        
+        // Sanitize the code - this prevents HTML injection but preserves the original formatting
+        const sanitizedCode = sanitizeHTML(code);
+        
+        // Create the HTML structure for the code block immediately
         return `<div class="code-block">
                   <div class="code-header">
                     <span class="code-language">${language.trim() || 'code'}</span>
@@ -47,9 +53,14 @@ function markdownToHTML(markdown) {
                       <button class="code-copy-btn" aria-label="Copy code">Copy</button>
                     </div>
                   </div>
-                  <pre><code class="language-${language.trim() || 'plaintext'}">${sanitizeHTML(code)}</code></pre>
+                  <pre><code class="language-${language.trim() || 'plaintext'}">${sanitizedCode}</code></pre>
                 </div>`;
     });
+    
+    // Now process the rest of the markdown, which will exclude the already-processed code blocks
+    
+    // Process tables
+    html = processMarkdownTables(html);
     
     // Convert inline code (but not inside already converted code blocks)
     html = html.replace(/(`+)(?!<\/code>)(.*?)(?!\<code)((`+))/g, function(match, start, content) {
@@ -59,9 +70,6 @@ function markdownToHTML(markdown) {
         return match; // Return as is if not single backtick
     });
     
-    // Process tables before paragraphs
-    html = processMarkdownTables(html);
-    
     // Convert headers with Perplexity-style classes
     html = html.replace(/^#{1,6}\s+(.*)$/gm, function(match) {
         const level = match.trim().indexOf(' ');
@@ -69,28 +77,26 @@ function markdownToHTML(markdown) {
         return `<h${level} class="px-header px-h${level}">${text}</h${level}>`;
     });
     
-    // Convert bold and italic with better regex to avoid nested matches
+    // Convert bold and italic
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="px-bold">$1</strong>');
     html = html.replace(/\*(.*?)\*/g, '<em class="px-italic">$1</em>');
     html = html.replace(/\_\_(.*?)\_\_/g, '<strong class="px-bold">$1</strong>');
     html = html.replace(/\_(.*?)\_/g, '<em class="px-italic">$1</em>');
     
-    // Process unordered lists with Perplexity-style classes - improved regex
+    // Process lists
     html = processUnorderedLists(html);
-    
-    // Process ordered lists with Perplexity-style classes - improved regex
     html = processOrderedLists(html);
     
     // Convert horizontal rules
     html = html.replace(/^(\s*[-*_]){3,}\s*$/gm, '<hr class="px-hr">');
     
-    // Convert links with Perplexity-style classes
+    // Convert links
     html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="px-link" target="_blank" rel="noopener noreferrer">$1</a>');
     
-    // Handle blockquotes - improved to handle multi-line quotes
+    // Handle blockquotes
     html = processBlockquotes(html);
     
-    // Convert paragraphs (must be done after lists and blockquotes)
+    // Convert paragraphs
     html = processParagraphs(html);
     
     // Clean up extra line breaks
@@ -238,7 +244,6 @@ function processParagraphs(html) {
         return `<p class="px-paragraph">${processedP}</p>`;
     }).join('\n\n');
 }
-
 /**
  * Attaches click event listeners to all code copy buttons in the chat
  */
@@ -254,7 +259,13 @@ function attachCodeCopyListeners() {
             
             // Get the code content
             const codeElement = codeBlock.querySelector('code');
-            const codeText = codeElement.textContent;
+            
+            // Get code text but remove any language headers or unnecessary elements
+            let codeText = codeElement.textContent;
+            
+            // Remove potential header lines that start with common comment patterns
+            // This regex identifies lines that look like headers or comments at the top of code
+            codeText = codeText.replace(/^(\/\/.*|#.*|\s*\/\*.*\*\/\s*|<!-.*->)?\n?/, '');
             
             // Copy to clipboard
             navigator.clipboard.writeText(codeText)
@@ -284,7 +295,7 @@ function attachCodeCopyListeners() {
  * Scrolls the chat container to the bottom
  * @param {boolean} smooth - Whether to use smooth scrolling animation
  */
-function scrollToBottom(smooth = false) {
+function scrollToBottom(smooth = true) {
     const chatContainer = document.getElementById('chat-container');
     
     // Use smooth scrolling if specified, otherwise instant scroll
