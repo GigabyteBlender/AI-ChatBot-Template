@@ -28,6 +28,9 @@ This project is a modern web-based chat interface that integrates with AI servic
 * default dark colour scheme
 * Message input area with support for shift+enter for line breaks
 
+### Current Interface:
+![Photo](assets/example.jpg)
+
 ### Chat Functionality
 * Persistent chat history stored in local storage
 * Converts the chats from mark down to html for correct format
