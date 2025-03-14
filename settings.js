@@ -18,8 +18,10 @@ class SettingsManager {
     initEventListeners() {
         // Exit button event listener
         this.exitBtn.addEventListener('click', () => {
-            window.location.href = 'index.html';
+            document.body.classList.remove('settings-open');
+            navigateTo('index.html');
         });
+        
         
         // Theme toggle button event listener
         this.themeToggleBtn.addEventListener('click', () => {
@@ -94,6 +96,16 @@ class SettingsManager {
         }
     }
 }
+
+function navigateTo(url) {
+    const overlay = document.getElementById('page-transition-overlay');
+    overlay.classList.add('active');
+    
+    setTimeout(() => {
+        window.location.href = url;
+    }, 300); // Match this delay to your CSS transition time
+}
+
 
 // Initialize settings when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {

@@ -7,8 +7,36 @@
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/png" href="favicon.png">
     <meta name="description" content="AI Chat Assistant powered by various language models">
+
+    <style>
+        /* Pre-load styles to prevent flash */
+        html, body {
+          background-color: #f4f4f9; /* Light mode default background */
+          transition: background-color 0.3s;
+          min-height: 100vh;
+          margin: 0;
+          padding: 0;
+        }
+        
+        /* For dark mode - will apply if dark mode was previously selected */
+        html.dark-theme, 
+        html.dark-theme body {
+          background-color: #1a1a1a; /* Dark mode background */
+        }
+    </style>
+      
+      <!-- Add this before your other script tags -->
+    <script>
+    // Check for dark mode and apply class to html immediately
+        (function() {
+            if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark-theme');
+            }
+        })();
+    </script>
 </head>
 <body>
+    <div id="page-transition-overlay"></div>
     <button id="sidebar-toggle" aria-label="Toggle sidebar"></button>
 
     <div id="sidebar">
@@ -28,7 +56,7 @@
     <div id="chat-wrapper">
         <div id="mode-selector">
             <div class="mode-container">
-                <label for="mode">Model:</label>
+                <label for="mode">Mode:</label>
                 <select id="mode" aria-label="Select AI model">
                     <option value="api">OpenRouter API</option>
                     <option value="random">Random Mode</option>

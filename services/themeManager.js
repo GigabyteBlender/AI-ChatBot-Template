@@ -1,30 +1,47 @@
-// services/themeManager.js
 export class ThemeManager {
+
+    constructor() {
+        this.isDarkMode = localStorage.getItem('darkMode') === 'true';
+    }
     /**
      * Initialize theme based on saved preference
      */
     initTheme() {
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.body.classList.toggle('dark-mode', savedTheme === 'dark');
-        this.applyDarkMode();
+        if (this.isDarkMode) {
+            document.body.classList.add('dark-mode');
+            document.documentElement.classList.add('dark-theme');
+            this.applyDarkMode(true);
+        } else {
+            document.body.classList.remove('dark-mode');
+            document.documentElement.classList.remove('dark-theme');
+            this.applyDarkMode(false);
+        }
     }
 
     /**
      * Toggle dark mode on and off
      */
     toggleDarkMode() {
-        document.body.classList.toggle('dark-mode');
-        const isDarkMode = document.body.classList.contains('dark-mode');
-        localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-        this.applyDarkMode();
-        return isDarkMode;
+        this.isDarkMode = !this.isDarkMode;
+        localStorage.setItem('darkMode', this.isDarkMode);
+        
+        if (this.isDarkMode) {
+            document.body.classList.add('dark-mode');
+            document.documentElement.classList.add('dark-theme');
+        } else {
+            document.body.classList.remove('dark-mode');
+            document.documentElement.classList.remove('dark-theme');
+        }
+        
+        this.applyDarkMode(this.isDarkMode);
+        return this.isDarkMode;
     }
 
     /**
      * Apply dark mode class to all relevant elements
+     * @param {boolean} isDarkMode - Whether to apply or remove dark mode
      */
-    applyDarkMode() {
-        const isDarkMode = document.body.classList.contains('dark-mode');
+    applyDarkMode(isDarkMode) {
         const elements = [
             document.getElementById('chat-container'),
             document.getElementById('input-container'),
@@ -33,7 +50,8 @@ export class ThemeManager {
             document.getElementById('mode'),
             document.getElementById('settingsBtn'),
             document.getElementById('clearBtn'),
-            document.getElementById('sidebar')
+            document.getElementById('sidebar'),
+            document.getElementById('submitBtn')
         ];
 
         // Add side-buttons to the elements array
@@ -42,10 +60,34 @@ export class ThemeManager {
             elements.push(sideButtons[i]);
         }
         
+        // Add message elements
+        const messages = document.getElementsByClassName('message');
+        for (let i = 0; i < messages.length; i++) {
+            elements.push(messages[i]);
+        }
+        
+        // Add chat history items
+        const historyItems = document.getElementById('chat-history-list')?.children;
+        if (historyItems) {
+            for (let i = 0; i < historyItems.length; i++) {
+                elements.push(historyItems[i]);
+                
+                // Also get the delete buttons inside history items
+                const deleteBtn = historyItems[i].querySelector('.chat-delete-btn');
+                if (deleteBtn) {
+                    elements.push(deleteBtn);
+                }
+            }
+        }
+        
         // Toggle dark-mode class on all elements
         elements.forEach(element => {
             if (element) {
-                element.classList.toggle('dark-mode', isDarkMode);
+                if (isDarkMode) {
+                    element.classList.add('dark-mode');
+                } else {
+                    element.classList.remove('dark-mode');
+                }
             }
         });
     }

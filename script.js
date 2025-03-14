@@ -26,6 +26,95 @@ function sanitizeHTML(str) {
 }
 
 /**
+ * Converts markdown syntax to HTML with Perplexity-like styling
+ * @param {string} markdown - The markdown string to convert
+ * @returns {string} The resulting HTML
+ */
+function markdownToHTML(markdown) {
+    if (!markdown) return '';
+    
+    let html = markdown;
+    
+    // Convert code blocks before anything else to prevent interference
+    html = html.replace(/```(.*?)\n([\s\S]*?)```/g, function(match, language, code) {
+        return `<div class="code-block">
+                  <div class="code-header">
+                    <span class="code-language">${language.trim() || 'code'}</span>
+                  </div>
+                  <pre><code class="language-${language.trim()}">${sanitizeHTML(code)}</code></pre>
+                </div>`;
+    });
+    
+    // Convert inline code
+    html = html.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
+    
+    // Convert headers with Perplexity-style classes
+    html = html.replace(/^# (.*$)/gm, '<h1 class="px-header px-h1">$1</h1>');
+    html = html.replace(/^## (.*$)/gm, '<h2 class="px-header px-h2">$1</h2>');
+    html = html.replace(/^### (.*$)/gm, '<h3 class="px-header px-h3">$1</h3>');
+    html = html.replace(/^#### (.*$)/gm, '<h4 class="px-header px-h4">$1</h4>');
+    html = html.replace(/^##### (.*$)/gm, '<h5 class="px-header px-h5">$1</h5>');
+    html = html.replace(/^###### (.*$)/gm, '<h6 class="px-header px-h6">$1</h6>');
+    
+    // Convert bold and italic with Perplexity-style classes
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="px-bold">$1</strong>');
+    html = html.replace(/\*(.*?)\*/g, '<em class="px-italic">$1</em>');
+    html = html.replace(/\_\_(.*?)\_\_/g, '<strong class="px-bold">$1</strong>');
+    html = html.replace(/\_(.*?)\_/g, '<em class="px-italic">$1</em>');
+    
+    // Process unordered lists with Perplexity-style classes
+    const listBlockRegex = /(?:^|\n)((?:[\-\*]\s+.*(?:\n|$))+)/g;
+    html = html.replace(listBlockRegex, function(match, listBlock) {
+        const listItems = listBlock.split('\n')
+            .filter(line => line.trim().match(/^[\-\*]\s+/))
+            .map(line => line.replace(/^[\-\*]\s+/, ''))
+            .filter(item => item.trim())
+            .map(item => `<li class="px-list-item">${item}</li>`)
+            .join('');
+        
+        return `\n<ul class="px-list px-unordered-list">${listItems}</ul>\n`;
+    });
+    
+    // Process ordered lists with Perplexity-style classes
+    const orderedListBlockRegex = /(?:^|\n)((?:\d+\.\s+.*(?:\n|$))+)/g;
+    html = html.replace(orderedListBlockRegex, function(match, listBlock) {
+        const listItems = listBlock.split('\n')
+            .filter(line => line.trim().match(/^\d+\.\s+/))
+            .map(line => line.replace(/^\d+\.\s+/, ''))
+            .filter(item => item.trim())
+            .map(item => `<li class="px-list-item">${item}</li>`)
+            .join('');
+        
+        return `\n<ol class="px-list px-ordered-list">${listItems}</ol>\n`;
+    });
+    
+    // Convert links with Perplexity-style classes
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="px-link" target="_blank" rel="noopener noreferrer">$1</a>');
+    
+    // Handle blockquotes
+    html = html.replace(/^>\s*(.*$)/gm, '<blockquote class="px-blockquote">$1</blockquote>');
+    
+    // Convert paragraphs (must be done after lists)
+    html = html.replace(/(?:^|\n)([^<\n].*?)(?=\n|$)/g, function(match, p1) {
+        // Skip if it's already an HTML tag or empty line
+        if (p1.trim() === '' || p1.trim().match(/^<\/?[a-zA-Z]/)) return match;
+        return `\n<p class="px-paragraph">${p1}</p>\n`;
+    });
+    
+    // Clean up extra line breaks
+    html = html.replace(/\n{2,}/g, '\n');
+    
+    // Clean up empty paragraphs
+    html = html.replace(/<p[^>]*>\s*<\/p>/g, '');
+    
+    // Wrap the entire content in a container
+    html = `<div class="px-content">${html.trim()}</div>`;
+    
+    return html;
+}
+
+/**
+/**
  * Adds a message to the chat container with the appropriate styling and typing animation.
  * @async
  * @function addMessage
@@ -37,49 +126,41 @@ async function addMessage(content, sender) {
     const messageDiv = document.createElement('div');
     messageDiv.classList.add('message', sender);
 
-    // Sanitize the content to prevent XSS attacks
-    const sanitizedContent = sanitizeHTML(content);
-    
-    // Create a span to hold the animated text
-    const textSpan = document.createElement('span');
-    messageDiv.appendChild(textSpan);
+    // Create a container for the message content
+    const contentContainer = document.createElement('div');
+    contentContainer.classList.add('message-content');
+    messageDiv.appendChild(contentContainer);
 
     chatContainer.appendChild(messageDiv);
+    
     // Scroll to the bottom of the chat container
     chatContainer.scrollTop = chatContainer.scrollHeight;
+    
     // Apply dark mode class if necessary
-    if (document.body.classList.contains('dark-mode')) {
+    if (document.documentElement.classList.contains('dark-theme')) {
         messageDiv.classList.add('dark-mode');
     }
 
-    // Function to simulate typing animation
-    async function typeWriter(text, element) {
-        return new Promise((resolve) => {
-            let i = 0;
-            function type() {
-                const delay = parseInt(localStorage.getItem('speed') || '20', 10);
-
-                if (i < text.length) {
-                    // Use a text node instead of textContent to prevent HTML parsing
-                    if (i === 0) {
-                        element.textContent = '';
-                    }
-                    element.textContent += text.charAt(i);
-                    i++;
-                    setTimeout(type, delay);
-                } else {
-                    resolve(); // Resolve the promise when typing is complete
-                }
-            }
-            type();
-        });
-    }
-
-    // If the sender is the bot, start the typing animation
+    // If the sender is the bot, convert markdown to HTML
     if (sender === 'bot') {
-        await typeWriter(sanitizedContent, textSpan);
+        // Convert markdown to HTML
+        const htmlContent = markdownToHTML(content);
+        
+        // Set the HTML content
+        contentContainer.innerHTML = htmlContent;
+        
+        // Apply fade-in animation
+        const pxContent = contentContainer.querySelector('.px-content');
+        if (pxContent) {
+            pxContent.style.opacity = '0';
+            setTimeout(() => {
+                pxContent.style.opacity = '1';
+                pxContent.style.transition = 'opacity 0.3s ease-in-out';
+            }, 50);
+        }
     } else {
-        textSpan.textContent = sanitizedContent; // Directly set the user's message
+        // For user messages, just display as plain text
+        contentContainer.textContent = content;
     }
     
     // Add to current chat messages
@@ -97,10 +178,53 @@ async function addMessage(content, sender) {
 }
 
 /**
- * Generate a title for the chat based on the first user message
- * @param {Array} messages - Array of message objects
- * @returns {string} A title for the chat
+ * Loads a chat from history
+ * @param {string} chatId - The ID of the chat to load
  */
+function loadChat(chatId) {
+    const chat = chatHistoryService.getChat(chatId);
+    if (!chat) return;
+    
+    // Set as current chat
+    currentChatId = chatId;
+    currentChatMessages = chat.messages;
+    
+    // Clear the chat container
+    const chatContainer = document.getElementById('chat-container');
+    chatContainer.innerHTML = '';
+    
+    // Add each message to the chat interface
+    chat.messages.forEach(msg => {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', msg.sender);
+        
+        // Apply dark mode class if necessary
+        if (document.body.classList.contains('dark-mode')) {
+            messageDiv.classList.add('dark-mode');
+        }
+        
+        const contentContainer = document.createElement('div');
+        contentContainer.classList.add('message-content');
+        
+        // Convert bot messages from markdown to HTML
+        if (msg.sender === 'bot') {
+            contentContainer.innerHTML = markdownToHTML(msg.content);
+        } else {
+            contentContainer.textContent = msg.content;
+        }
+        
+        messageDiv.appendChild(contentContainer);
+        chatContainer.appendChild(messageDiv);
+    });
+    
+    // Scroll to the bottom
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    
+    // Update sidebar to highlight this chat
+    updateChatHistorySidebar();
+}
+
+// The rest of your code remains unchanged
 function getChatTitle(messages) {
     if (!messages || messages.length === 0) {
         return "New Chat";
@@ -118,11 +242,6 @@ function getChatTitle(messages) {
     return "New Chat";
 }
 
-/**
- * Handles the submission of user input, retrieves the bot's response, and updates the chat interface.
- * @async
- * @function handleSubmit
- */
 async function handleSubmit() {
     const userInput = document.getElementById('userInput');
     const userMessage = userInput.value.trim();
@@ -167,14 +286,11 @@ async function handleSubmit() {
     submitBtn.disabled = false;
 }
 
-/**
- * Starts a new chat conversation
- */
 function startNewChat() {
     // Clear the chat interface
     document.getElementById('chat-container').innerHTML = `
         <div class="message bot">
-            <span>Hello! How can I help you today?</span>
+            <div class="message-content">Hello! How can I help you today?</div>
         </div>
     `;
     
@@ -195,49 +311,6 @@ function startNewChat() {
     updateChatHistorySidebar();
 }
 
-/**
- * Loads a chat from history
- * @param {string} chatId - The ID of the chat to load
- */
-function loadChat(chatId) {
-    const chat = chatHistoryService.getChat(chatId);
-    if (!chat) return;
-    
-    // Set as current chat
-    currentChatId = chatId;
-    currentChatMessages = chat.messages;
-    
-    // Clear the chat container
-    const chatContainer = document.getElementById('chat-container');
-    chatContainer.innerHTML = '';
-    
-    // Add each message to the chat interface
-    chat.messages.forEach(msg => {
-        const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', msg.sender);
-        
-        // Apply dark mode class if necessary
-        if (document.body.classList.contains('dark-mode')) {
-            messageDiv.classList.add('dark-mode');
-        }
-        
-        const textSpan = document.createElement('span');
-        textSpan.textContent = msg.content;
-        messageDiv.appendChild(textSpan);
-        
-        chatContainer.appendChild(messageDiv);
-    });
-    
-    // Scroll to the bottom
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-    
-    // Update sidebar to highlight this chat
-    updateChatHistorySidebar();
-}
-
-/**
- * Updates the chat history sidebar with the latest chats
- */
 function updateChatHistorySidebar() {
     const historyList = document.getElementById('chat-history-list');
     historyList.innerHTML = '';
@@ -291,10 +364,6 @@ function updateChatHistorySidebar() {
     });
 }
 
-/**
- * Delete a chat and update the UI
- * @param {string} chatId - The ID of the chat to delete
- */
 function deleteChat(chatId) {
     // Delete the chat from storage
     chatHistoryService.deleteChat(chatId);
@@ -308,38 +377,32 @@ function deleteChat(chatId) {
     updateChatHistorySidebar();
 }
 
-/**
- * Initializes sidebar
- */
 function initSidebar() {
     const sidebarToggle = document.getElementById('sidebar-toggle');
     const sidebar = document.getElementById('sidebar');
     const chatWrapper = document.getElementById('chat-wrapper');
+    const body = document.body;
     
-    // Simple toggle function that uses a new class name
+    // Check if sidebar was previously hidden
+    const sidebarHidden = localStorage.getItem('sidebarHidden') === 'true';
+    
+    // Set initial state
+    if (sidebarHidden) {
+        sidebar.classList.add('hidden-sidebar');
+        chatWrapper.classList.add('full-width');
+        body.classList.add('sidebar-hidden');
+    }
+    
+    // Toggle function
     sidebarToggle.addEventListener('click', () => {
-        sidebar.classList.toggle('show-sidebar');
-        chatWrapper.classList.toggle('sidebar-expanded');
+        sidebar.classList.toggle('hidden-sidebar');
+        chatWrapper.classList.toggle('full-width');
+        body.classList.toggle('sidebar-hidden');
         
         // Store sidebar state for persistence
-        const isSidebarVisible = sidebar.classList.contains('show-sidebar');
-        localStorage.setItem('sidebarVisible', isSidebarVisible);
-        
-        // Update toggle button position
-        if (isSidebarVisible) {
-            sidebarToggle.style.left = `${parseInt(getComputedStyle(sidebar).width) + 20}px`;
-        } else {
-            sidebarToggle.style.left = '20px';
-        }
+        const isHidden = sidebar.classList.contains('hidden-sidebar');
+        localStorage.setItem('sidebarHidden', isHidden);
     });
-    
-    // Restore sidebar state on page load
-    const savedSidebarState = localStorage.getItem('sidebarVisible') === 'true';
-    if (savedSidebarState) {
-        sidebar.classList.add('show-sidebar');
-        chatWrapper.classList.add('sidebar-expanded');
-        sidebarToggle.style.left = `${parseInt(getComputedStyle(sidebar).width) + 20}px`;
-    }
     
     // Initialize chat history in sidebar
     updateChatHistorySidebar();
@@ -374,7 +437,7 @@ function initApp() {
     });
     
     document.getElementById('settingsBtn').addEventListener('click', () => {
-        window.location.href = 'settings.html';
+        navigateTo('settings.html');
     });
     
     document.getElementById('mode').addEventListener('change', (event) => {
@@ -397,6 +460,15 @@ function initApp() {
         // Start a new chat
         startNewChat();
     }
+}
+
+function navigateTo(url) {
+    const overlay = document.getElementById('page-transition-overlay');
+    overlay.classList.add('active');
+    
+    setTimeout(() => {
+        window.location.href = url;
+    }, 300); // Match this delay to your CSS transition time
 }
 
 // Initialize the app when DOM content is loaded
