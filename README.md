@@ -9,7 +9,7 @@ This project is a modern web-based chat interface that integrates with AI servic
 ### Core Files
 * **`index.html`**: Main HTML structure for the chat interface, including sidebar, chat display area, and controls
 * **`style.css`**: Comprehensive styling for the entire application with responsive design and theme support
-* **`script.js`**: Core application logic including message handling, UI interactions, and API communication
+* **`script.js`**: Core application logic including message handling, UI interactions, and API communication. Also formats all the chats
 * **`config.js`**: Configuration file for API keys and development utilities
 * **`settings.html`**: Settings interface with adjustable parameters for the chat experience
 * **`settings.js`**: JavaScript for handling settings functionality and preferences
@@ -30,9 +30,10 @@ This project is a modern web-based chat interface that integrates with AI servic
 
 ### Chat Functionality
 * Persistent chat history stored in local storage
+* Converts the chats from mark down to html for correct format
+* code is now kept in code-spaces where you are able to copy it easily
 * Multiple conversation management
 * Option to clear current chat
-* Typing animation effect for more natural conversation flow
 
 ### API Integration
 * Integration with OpenRouter API for AI model access
