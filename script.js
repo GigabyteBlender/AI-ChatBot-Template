@@ -26,7 +26,7 @@ function sanitizeHTML(str) {
 }
 
 /**
- * Converts markdown syntax to HTML with Perplexity-like styling
+ * Converts markdown syntax to HTML
  * @param {string} markdown - The markdown string to convert
  * @returns {string} The resulting HTML
  */
@@ -35,71 +35,65 @@ function markdownToHTML(markdown) {
     
     let html = markdown;
     
-    // Convert code blocks before anything else to prevent interference
+    // Preserve line breaks for processing
+    html = html.replace(/\r\n/g, '\n');
+    
+    // Convert code blocks with language support
     html = html.replace(/```(.*?)\n([\s\S]*?)```/g, function(match, language, code) {
+        // Trim trailing newlines from code
+        code = code.replace(/\n+$/, '');
         return `<div class="code-block">
                   <div class="code-header">
                     <span class="code-language">${language.trim() || 'code'}</span>
+                    <div class="code-actions">
+                      <button class="code-copy-btn" aria-label="Copy code">Copy</button>
+                    </div>
                   </div>
-                  <pre><code class="language-${language.trim()}">${sanitizeHTML(code)}</code></pre>
+                  <pre><code class="language-${language.trim() || 'plaintext'}">${sanitizeHTML(code)}</code></pre>
                 </div>`;
     });
     
-    // Convert inline code
-    html = html.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
+    // Convert inline code (but not inside already converted code blocks)
+    html = html.replace(/(`+)(?!<\/code>)(.*?)(?!\<code)((`+))/g, function(match, start, content) {
+        if (start.length === 1) {
+            return '<code class="inline-code">' + sanitizeHTML(content) + '</code>';
+        }
+        return match; // Return as is if not single backtick
+    });
+    
+    // Process tables before paragraphs
+    html = processMarkdownTables(html);
     
     // Convert headers with Perplexity-style classes
-    html = html.replace(/^# (.*$)/gm, '<h1 class="px-header px-h1">$1</h1>');
-    html = html.replace(/^## (.*$)/gm, '<h2 class="px-header px-h2">$1</h2>');
-    html = html.replace(/^### (.*$)/gm, '<h3 class="px-header px-h3">$1</h3>');
-    html = html.replace(/^#### (.*$)/gm, '<h4 class="px-header px-h4">$1</h4>');
-    html = html.replace(/^##### (.*$)/gm, '<h5 class="px-header px-h5">$1</h5>');
-    html = html.replace(/^###### (.*$)/gm, '<h6 class="px-header px-h6">$1</h6>');
+    html = html.replace(/^#{1,6}\s+(.*)$/gm, function(match) {
+        const level = match.trim().indexOf(' ');
+        const text = match.substring(level + 1).trim();
+        return `<h${level} class="px-header px-h${level}">${text}</h${level}>`;
+    });
     
-    // Convert bold and italic with Perplexity-style classes
+    // Convert bold and italic with better regex to avoid nested matches
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="px-bold">$1</strong>');
     html = html.replace(/\*(.*?)\*/g, '<em class="px-italic">$1</em>');
     html = html.replace(/\_\_(.*?)\_\_/g, '<strong class="px-bold">$1</strong>');
     html = html.replace(/\_(.*?)\_/g, '<em class="px-italic">$1</em>');
     
-    // Process unordered lists with Perplexity-style classes
-    const listBlockRegex = /(?:^|\n)((?:[\-\*]\s+.*(?:\n|$))+)/g;
-    html = html.replace(listBlockRegex, function(match, listBlock) {
-        const listItems = listBlock.split('\n')
-            .filter(line => line.trim().match(/^[\-\*]\s+/))
-            .map(line => line.replace(/^[\-\*]\s+/, ''))
-            .filter(item => item.trim())
-            .map(item => `<li class="px-list-item">${item}</li>`)
-            .join('');
-        
-        return `\n<ul class="px-list px-unordered-list">${listItems}</ul>\n`;
-    });
+    // Process unordered lists with Perplexity-style classes - improved regex
+    html = processUnorderedLists(html);
     
-    // Process ordered lists with Perplexity-style classes
-    const orderedListBlockRegex = /(?:^|\n)((?:\d+\.\s+.*(?:\n|$))+)/g;
-    html = html.replace(orderedListBlockRegex, function(match, listBlock) {
-        const listItems = listBlock.split('\n')
-            .filter(line => line.trim().match(/^\d+\.\s+/))
-            .map(line => line.replace(/^\d+\.\s+/, ''))
-            .filter(item => item.trim())
-            .map(item => `<li class="px-list-item">${item}</li>`)
-            .join('');
-        
-        return `\n<ol class="px-list px-ordered-list">${listItems}</ol>\n`;
-    });
+    // Process ordered lists with Perplexity-style classes - improved regex
+    html = processOrderedLists(html);
+    
+    // Convert horizontal rules
+    html = html.replace(/^(\s*[-*_]){3,}\s*$/gm, '<hr class="px-hr">');
     
     // Convert links with Perplexity-style classes
     html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="px-link" target="_blank" rel="noopener noreferrer">$1</a>');
     
-    // Handle blockquotes
-    html = html.replace(/^>\s*(.*$)/gm, '<blockquote class="px-blockquote">$1</blockquote>');
+    // Handle blockquotes - improved to handle multi-line quotes
+    html = processBlockquotes(html);
     
-    // Convert paragraphs (must be done after lists)
-    html = html.replace(/(?:^|\n)([^<\n].*?)(?=\n|$)/g, function(match, p1) {
-        // Skip if it's already an HTML tag or empty line
-        if (p1.trim() === '' || p1.trim().match(/^<\/?[a-zA-Z]/)) return match;
-        return `\n<p class="px-paragraph">${p1}</p>\n`;
-    });
+    // Convert paragraphs (must be done after lists and blockquotes)
+    html = processParagraphs(html);
     
     // Clean up extra line breaks
     html = html.replace(/\n{2,}/g, '\n');
@@ -111,6 +105,140 @@ function markdownToHTML(markdown) {
     html = `<div class="px-content">${html.trim()}</div>`;
     
     return html;
+}
+
+/**
+ * Process markdown tables
+ * @param {string} html - The HTML content to process
+ * @returns {string} Processed HTML with tables
+ */
+function processMarkdownTables(html) {
+    // This regex finds markdown tables
+    const tableRegex = /(\|[^\n]+\|\r?\n)((?:\|:?[-]+:?)+\|)(\n(?:\|[^\n]+\|\r?\n?)*)/g;
+    
+    return html.replace(tableRegex, function(match, headerRow, delimiterRow, bodyRows) {
+        // Process header
+        const headers = headerRow.trim().split('|').slice(1, -1).map(
+            cell => `<th>${cell.trim()}</th>`
+        ).join('');
+        
+        // Process alignment from delimiter row
+        const alignments = delimiterRow.trim().split('|').slice(1, -1).map(delim => {
+            if (delim.startsWith(':') && delim.endsWith(':')) return 'center';
+            if (delim.endsWith(':')) return 'right';
+            return 'left';
+        });
+        
+        // Process body rows
+        const rows = bodyRows.trim().split('\n').map(row => {
+            const cells = row.trim().split('|').slice(1, -1);
+            const cellsHtml = cells.map((cell, i) => {
+                const align = alignments[i] ? `style="text-align:${alignments[i]}"` : '';
+                return `<td ${align}>${cell.trim()}</td>`;
+            }).join('');
+            return `<tr>${cellsHtml}</tr>`;
+        }).join('');
+        
+        return `<div class="table-wrapper"><table class="px-table">
+            <thead><tr>${headers}</tr></thead>
+            <tbody>${rows}</tbody>
+        </table></div>`;
+    });
+}
+
+/**
+ * Process unordered lists
+ * @param {string} html - The HTML content to process
+ * @returns {string} Processed HTML with unordered lists
+ */
+function processUnorderedLists(html) {
+    // Find unordered list blocks
+    const listBlocks = html.match(/(?:^|\n)(?:[ \t]*[-*+][ \t]+.+\n?)+/g);
+    
+    if (!listBlocks) return html;
+    
+    listBlocks.forEach(block => {
+        // Split into list items
+        const items = block.match(/[ \t]*[-*+][ \t]+.+(?:\n|$)/g);
+        
+        if (!items) return;
+        
+        const listItems = items.map(item => {
+            const content = item.replace(/^[ \t]*[-*+][ \t]+/, '').trim();
+            return `<li class="px-list-item">${content}</li>`;
+        }).join('');
+        
+        const listHtml = `<ul class="px-list px-unordered-list">${listItems}</ul>`;
+        html = html.replace(block, listHtml);
+    });
+    
+    return html;
+}
+
+/**
+ * Process ordered lists
+ * @param {string} html - The HTML content to process
+ * @returns {string} Processed HTML with ordered lists
+ */
+function processOrderedLists(html) {
+    // Find ordered list blocks
+    const listBlocks = html.match(/(?:^|\n)(?:[ \t]*\d+\.[ \t]+.+\n?)+/g);
+    
+    if (!listBlocks) return html;
+    
+    listBlocks.forEach(block => {
+        // Split into list items
+        const items = block.match(/[ \t]*\d+\.[ \t]+.+(?:\n|$)/g);
+        
+        if (!items) return;
+        
+        const listItems = items.map(item => {
+            const content = item.replace(/^[ \t]*\d+\.[ \t]+/, '').trim();
+            return `<li class="px-list-item">${content}</li>`;
+        }).join('');
+        
+        const listHtml = `<ol class="px-list px-ordered-list">${listItems}</ol>`;
+        html = html.replace(block, listHtml);
+    });
+    
+    return html;
+}
+
+/**
+ * Process blockquotes
+ * @param {string} html - The HTML content to process
+ * @returns {string} Processed HTML with blockquotes
+ */
+function processBlockquotes(html) {
+    // Find continuous blockquote lines
+    const quoteRegex = /(?:^|\n)(?:&gt;|>)[ \t]?(.*?)(?=\n(?!(?:&gt;|>))|$)/gs;
+    
+    return html.replace(quoteRegex, function(match, content) {
+        // Remove any trailing newlines
+        content = content.replace(/\n$/, '');
+        return `<blockquote class="px-blockquote">${content}</blockquote>`;
+    });
+}
+
+/**
+ * Process paragraphs
+ * @param {string} html - The HTML content to process
+ * @returns {string} Processed HTML with paragraphs
+ */
+function processParagraphs(html) {
+    // Split content by double newlines (paragraph breaks)
+    const paragraphs = html.split(/\n\n+/);
+    
+    return paragraphs.map(p => {
+        // Skip if empty or already contains HTML tags
+        if (!p.trim() || p.trim().match(/^<\/?[a-zA-Z]|^<blockquote|^<[uo]l|^<h[1-6]|^<hr|^<div class="code-block"|^<div class="table-wrapper"/)) {
+            return p;
+        }
+        
+        // Handle multi-line paragraphs (with single line breaks)
+        const processedP = p.replace(/\n/g, '<br>');
+        return `<p class="px-paragraph">${processedP}</p>`;
+    }).join('\n\n');
 }
 
 /**

@@ -374,19 +374,37 @@ button {
 
 /* Code blocks */
 .code-block {
-    margin: 1em 0;
-    background-color: #dddddd;
-    border-radius: 6px;
+    margin: 1.5em 0;
+    background-color: #f5f5f5;
+    border-radius: 8px;
     overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    border: 1px solid #e0e0e0;
+    max-width: 100%;
+}
+
+.dark-mode .code-block {
+    background-color: #2d2d2d;
+    border-color: #444;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .code-header {
-    background-color: #d3d3d3;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #e0e0e0;
     padding: 0.5em 1em;
-    font-size: 0.75em;
-    color: #6c757d;
-    border-bottom: 1px solid #000000;
+    font-size: 0.85em;
+    color: #555;
+    border-bottom: 1px solid #ccc;
+}
+
+.dark-mode .code-header {
+    background-color: #3d3d3d;
+    color: #ccc;
+    border-color: #555;
 }
 
 .code-language {
@@ -394,16 +412,108 @@ button {
     text-transform: lowercase;
 }
 
+.code-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.code-copy-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 2px 5px;
+    color: #666;
+    font-size: 0.9em;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.code-copy-btn:hover {
+    background-color: rgba(0,0,0,0.1);
+    color: #333;
+}
+
+.dark-mode .code-copy-btn {
+    color: #aaa;
+}
+
+.dark-mode .code-copy-btn:hover {
+    background-color: rgba(255,255,255,0.1);
+    color: #fff;
+}
+
 .code-block pre {
     margin: 0;
-    padding: 0.5em;
+    padding: 1em;
     overflow-x: auto;
+    background-color: inherit;
+    border-radius: 0 0 8px 8px;
 }
 
 .code-block code {
     font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 0.875em;
-    color: #24292e;
+    font-size: 0.9em;
+    line-height: 1.5;
+    color: #333;
+    tab-size: 4;
+}
+
+.dark-mode .code-block code {
+    color: #e0e0e0;
+}
+
+/* Syntax highlighting */
+.code-block .keyword { color: #8959a8; }
+.code-block .string { color: #718c00; }
+.code-block .number { color: #f5871f; }
+.code-block .comment { color: #8e908c; font-style: italic; }
+.code-block .operator { color: #3e999f; }
+.code-block .function { color: #4271ae; }
+
+.dark-mode .code-block .keyword { color: #c397d8; }
+.dark-mode .code-block .string { color: #b9ca4a; }
+.dark-mode .code-block .number { color: #e78c45; }
+.dark-mode .code-block .comment { color: #969896; }
+.dark-mode .code-block .operator { color: #70c0b1; }
+.dark-mode .code-block .function { color: #7aa6da; }
+
+/* Inline code styling */
+.inline-code {
+    background-color: #f0f0f0;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.9em;
+    color: #e83e8c;
+    border: 1px solid #e0e0e0;
+    white-space: nowrap;
+}
+
+.dark-mode .inline-code {
+    background-color: #333;
+    color: #ff7b9c;
+    border-color: #555;
+}
+
+/* Animation for code copying */
+@keyframes copySuccess {
+    0% { opacity: 0; transform: translateY(5px); }
+    20% { opacity: 1; transform: translateY(0); }
+    80% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-5px); }
+}
+
+.copy-feedback {
+    position: absolute;
+    bottom: 100%;
+    right: 10px;
+    background-color: #4caf50;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    pointer-events: none;
+    animation: copySuccess 1.5s ease forwards;
 }
 
 /* Links */
@@ -460,9 +570,8 @@ button {
 }
 
 .px-list-item {
-    margin-bottom: 0.25em;
+    margin-top: 0.25em;
 }
-
 
 .hidden {
     display: none !important;
@@ -798,6 +907,24 @@ body.dark-mode #page-transition-overlay {
 /* Responsive design */
 @media (max-width: 768px) {
     
+    .code-block {
+        margin: 1em 0;
+        border-radius: 6px;
+    }
+    
+    .code-block pre {
+        padding: 0.8em;
+    }
+    
+    .code-block code {
+        font-size: 0.85em;
+    }
+    
+    .code-header {
+        padding: 0.4em 0.8em;
+        font-size: 0.8em;
+    }
+
     .message {
         max-width: 85%;
     }
