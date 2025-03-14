@@ -73,6 +73,7 @@
 
   /* For the sidebar-visible state transition */
   body:not(.sidebar-hidden) #sidebar-toggle {
+    background-color: #d32f2f; /* Makes it visually distinctive as a "close" button */
     left: calc(var(--sidebar-width) + 10px);
   }
   
@@ -770,54 +771,159 @@
     border-top: 6px solid #fff;
     border-radius: 50%;
     animation: spin 1.2s linear infinite;
+
+  }
+
+
+@media (max-width: 768px) {
+  /* Better sidebar handling */
+  #sidebar {
+    width: 100%;
+    z-index: 1000;
+  }
+
+  body:not(.sidebar-hidden) #chat-wrapper {
+    display: none;
   }
   
-  @media (min-width: 769px) {
-    body:not(.sidebar-hidden) #sidebar-toggle {
-      left: calc(var(--sidebar-width) + 10px);
-    }
+  /* Improve main chat area when sidebar is hidden */
+  body.sidebar-hidden #chat-wrapper {
+    left: 0;
+    width: 100%;
   }
-
-  /* Position when sidebar is visible - mobile */
-  @media (max-width: 768px) {
-    /* When sidebar is visible, position button at right side */
-    body:not(.sidebar-hidden) #sidebar-toggle {
-      left: auto;
-      right: 20px;
-    }
-    
-    /* Add transition animations */
-    body.sidebar-hidden #sidebar-toggle {
-      transform: translateX(0);
-      transition: transform 0.5s ease;
-    }
-    
-    body:not(.sidebar-hidden) #sidebar-toggle {
-      transform: translateX(0);
-      transition: transform 0.5s ease;
-    }
-
-    .message {
-      max-width: 80%;
-      margin-left: 5px;
-      margin-right: 5px;
-    }
-    
-    /* Hide main content when sidebar is open on mobile */
-    body:not(.sidebar-hidden) #chat-wrapper {
-      display: none;
-    }
-    
-    /* Make sidebar take full width on mobile */
+  
+  /* Better message container on small screens */
+  .message {
+    max-width: 85%;
+    margin-left: 0;
+    margin-right: 0;
+    font-size: 15px;
+  }
+  
+  /* Improve input area */
+  #input-container {
+    padding: 10px;
+  }
+  
+  #userInput {
+    padding: 10px;
+    font-size: 16px; /* Better for touch input */
+  }
+  
+  #submitBtn {
+    padding: 0 15px;
+    min-width: 60px; /* Ensure tap target size */
+  }
+  
+  
+  /* Make buttons easier to tap */
+  button {
+    min-height: 44px; /* Recommended minimum touch target size */
+  }
+  
+  /* Better code block handling on small screens */
+  .code-block {
+    font-size: 14px;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  
+  /* Improve toggle button position and visibility */
+  #sidebar-toggle {
+    top: 15px;
+    left: 15px;
+    width: 42px;
+    height: 42px;
+    background-size: 26px;
+    z-index: 1001; /* Ensure it stays above other elements */
+    box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+  }
+  
+  /* Fix toggle positioning when sidebar is visible */
+  body:not(.sidebar-hidden) #sidebar-toggle {
+    left: auto;
+    right: 15px;
+    background-color: #d32f2f; /* Makes it visually distinctive as a "close" button */
+  }
+  
+  /* Fix chat history items for better touch targets */
+  #chat-history-list li {
+    padding: 15px;
+    margin-bottom: 10px;
+  }
+  
+  /* Make delete button always visible on mobile */
+  #chat-history-list li .chat-delete-btn {
+    opacity: 1;
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+  
+  /* Fix settings page for mobile */
+  .settings-group {
+    width: 100%;
+  }
+  
+  /* Improve form controls on mobile */
+  .settings-select,
+  .settings-button,
+  .settings-button-primary {
+    height: 48px;
+  }
+  
+  /* Add viewport-specific height units for better mobile layout */
+  #chat-container {
+    max-height: calc(100vh - 130px); /* Account for header and input area */
+  }
+  
+  /* Fix orientation changes */
+  @media (orientation: landscape) {
     #sidebar {
-      width: 100%;
+      max-width: 80%;
     }
-
-    /* When typing starts, ensure all chat elements remain visible */
-    body.typing #mode-selector,
-    body.typing #chat-container,
-    body.typing #input-container {
-      display: flex !important;
+    
+    .message {
+      max-width: 75%;
     }
- 
   }
+}
+
+/* Fix iOS issues */
+@supports (-webkit-touch-callout: none) {
+  /* Fix iOS height calculations */
+  body, #chat-wrapper, #sidebar {
+    height: -webkit-fill-available;
+  }
+  
+  /* Fix iOS inputs */
+  textarea, select, button {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+}
+
+/* Small phones */
+@media (max-width: 375px) {
+  .message {
+    max-width: 90%;
+  }
+  
+  #mode-selector {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  
+  .mode-container, .action-buttons {
+    width: 100%;
+  }
+  
+  #mode {
+    width: 100%;
+  }
+  
+  .action-buttons {
+    display: flex;
+    justify-content: space-between;
+  }
+}
