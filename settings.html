@@ -6,42 +6,15 @@
     <title>Chat Settings</title>
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/png" href="favicon.png">
-
-    <style>
-        /* Pre-load styles to prevent flash */
-        html, body {
-          background-color: #f4f4f9; /* Light mode default background */
-          transition: background-color 0.3s;
-          min-height: 100vh;
-          margin: 0;
-          padding: 0;
-        }
-        
-        /* For dark mode - will apply if dark mode was previously selected */
-        html.dark-theme, 
-        html.dark-theme body {
-          background-color: #1a1a1a; /* Dark mode background */
-        }
-    </style>
-      
-      <!-- Add this before your other script tags -->
-    <script>
-        // Check for dark mode and apply class to html immediately
-        (function() {
-            if (localStorage.getItem('darkMode') === 'true') {
-            document.documentElement.classList.add('dark-theme');
-            }
-        })();
-    </script>
 </head>
 <body>
-    <div id="page-transition-overlay"></div>
     <div id="settings-wrapper">
         <h1>Chat Settings</h1>
         
         <div class="settings-group">
-            <h2>Appearance</h2>
-            <button id="themeToggleBtn" class="settings-button">Switch to Dark Mode</button>
+            <h2>Options</h2>
+            <!--add settings here-->
+            
         </div>
         
         <div class="settings-group">

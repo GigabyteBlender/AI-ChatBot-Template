@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This project is a modern web-based chat interface that integrates with AI services through the OpenRouter API. The interface includes multiple interaction modes, a persistent chat history feature, and a customizable settings panel. It provides a complete chat application experience with both light and dark themes.
+This project is a modern web-based chat interface that integrates with AI services through the OpenRouter API. The interface includes multiple interaction modes, a persistent chat history feature, and a customizable settings panel. It provides a complete chat application experience with all the features you would need.
 
 ## Key Components
 
@@ -17,7 +17,6 @@ This project is a modern web-based chat interface that integrates with AI servic
 ### Services
 * **`services/apiService.js`**: Manages API interactions with OpenRouter
 * **`services/uiService.js`**: Handles UI-related functionality
-* **`services/themeManager.js`**: Controls theme switching between light and dark modes
 * **`services/chatHistoryService.js`**: Manages persistent chat history functionality
 
 ## Features
@@ -26,7 +25,7 @@ This project is a modern web-based chat interface that integrates with AI servic
 * Responsive design that works across desktop and mobile devices
 * Collapsible sidebar for chat history navigation
 * Real-time message display with customizable typing animation
-* Support for both light and dark themes
+* default dark colour scheme
 * Message input area with support for shift+enter for line breaks
 
 ### Chat Functionality
@@ -45,7 +44,6 @@ This project is a modern web-based chat interface that integrates with AI servic
 * Adjustable typing speed for bot responses
 * Controllable response creativity through temperature setting 
 * Model selection options
-* Theme toggle between light and dark modes
 
 ## Configuration
 

@@ -1,13 +1,11 @@
 import { config } from './config.js';
 import { ApiService } from './services/apiService.js';
 import { UiService } from './services/uiService.js';
-import { ThemeManager } from './services/themeManager.js';
 import { ChatHistoryService } from './services/chatHistoryService.js';
 
 // Initialize services
 const apiService = new ApiService(config.OPENROUTER_API_KEY);
 const uiService = new UiService();
-const themeManager = new ThemeManager();
 const chatHistoryService = new ChatHistoryService();
 
 // Keep track of current chat
@@ -264,11 +262,6 @@ async function addMessage(content, sender) {
     // Scroll to the bottom of the chat container
     chatContainer.scrollTop = chatContainer.scrollHeight;
     
-    // Apply dark mode class if necessary
-    if (document.documentElement.classList.contains('dark-theme')) {
-        messageDiv.classList.add('dark-mode');
-    }
-
     // If the sender is the bot, convert markdown to HTML
     if (sender === 'bot') {
         // Convert markdown to HTML
@@ -325,11 +318,6 @@ function loadChat(chatId) {
     chat.messages.forEach(msg => {
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('message', msg.sender);
-        
-        // Apply dark mode class if necessary
-        if (document.body.classList.contains('dark-mode')) {
-            messageDiv.classList.add('dark-mode');
-        }
         
         const contentContainer = document.createElement('div');
         contentContainer.classList.add('message-content');
@@ -478,12 +466,6 @@ function updateChatHistorySidebar() {
             listItem.classList.add('active-chat');
         }
         
-        // Apply dark mode if necessary
-        if (document.body.classList.contains('dark-mode')) {
-            listItem.classList.add('dark-mode');
-            deleteBtn.classList.add('dark-mode');
-        }
-        
         listItem.addEventListener('click', () => {
             loadChat(chat.id);
         });
@@ -547,8 +529,6 @@ function initSidebar() {
  * Initializes the chat application.
  */
 function initApp() {
-    // Initialize theme
-    themeManager.initTheme();
     
     // Load saved mode
     const savedMode = localStorage.getItem('mode') || 'api';
@@ -565,7 +545,7 @@ function initApp() {
     });
     
     document.getElementById('settingsBtn').addEventListener('click', () => {
-        navigateTo('settings.html');
+        window.location.href = 'settings.html'
     });
     
     document.getElementById('mode').addEventListener('change', (event) => {
@@ -589,15 +569,5 @@ function initApp() {
         startNewChat();
     }
 }
-
-function navigateTo(url) {
-    const overlay = document.getElementById('page-transition-overlay');
-    overlay.classList.add('active');
-    
-    setTimeout(() => {
-        window.location.href = url;
-    }, 300); // Match this delay to your CSS transition time
-}
-
 // Initialize the app when DOM content is loaded
 document.addEventListener('DOMContentLoaded', initApp);
