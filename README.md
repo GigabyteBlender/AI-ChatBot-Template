@@ -37,14 +37,22 @@ This project is a modern web-based chat interface that integrates with AI servic
 
 ### API Integration
 * Integration with OpenRouter API for AI model access
-* Support for different AI models including Claude and Gemini
-* Random response mode for testing without API consumption
+* Support for different AI models including Gemini, Deepseek and many others
+* Random response mode for application testing without API consumption
 * Configurable temperature setting for response creativity
 
 ### Settings
 * Adjustable typing speed for bot responses
 * Controllable response creativity through temperature setting 
-* Model selection options
+* Model selection options (currently 5 different model to choose from)
+
+```text
+Gemini 2.0 Flash,
+DeepSeek R1 Zero,
+Rogue Rose v0.2,
+DeepSeek V3,
+Dolphin3.0 Mistral
+```
 
 ## Configuration
 
