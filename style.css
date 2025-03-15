@@ -801,6 +801,12 @@
     left: 0;
     width: 100%;
   }
+
+  #mode-selector{
+    position: fixed;
+    width: 100%;
+    top: 0;
+  }
   
   /* Better message container on small screens */
   .message {
@@ -813,6 +819,9 @@
   /* Improve input area */
   #input-container {
     padding: 10px;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
   }
   
   #userInput {
@@ -884,7 +893,7 @@
   
   /* Add viewport-specific height units for better mobile layout */
   #chat-container {
-    max-height: calc(100vh - 130px); /* Account for header and input area */
+    max-height: calc(100vh - 70px); /* Account for header and input area */
   }
   
   /* Fix orientation changes */
