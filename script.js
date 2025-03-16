@@ -1,684 +1,293 @@
 import { config } from './config.js';
 import { ApiService } from './services/apiService.js';
 import { ChatHistoryService } from './services/chatHistoryService.js';
-
-// Initialize services
-const apiService = new ApiService(config.OPENROUTER_API_KEY);
-const chatHistoryService = new ChatHistoryService();
-
-// Keep track of current chat
-let currentChatId = null;
-let currentChatMessages = [];
+import { UIService } from './services/uiService.js';
 
 /**
- * Sanitizes a string to prevent XSS attacks
- * @param {string} str - The string to sanitize
- * @returns {string} The sanitized string
+ * ChatApp class for managing the chat application state and coordination
  */
-function sanitizeHTML(str) {
-    const temp = document.createElement('div');
-    temp.textContent = str;
-    return temp.innerHTML;
-}
-
-/**
- * Converts markdown syntax to HTML
- * @param {string} markdown - The markdown string to convert
- * @returns {string} The resulting HTML
- */
-function markdownToHTML(markdown) {
-    if (!markdown) return '';
-    
-    let html = markdown;
-    
-    // Preserve line breaks for processing
-    html = html.replace(/\r\n/g, '\n');
-    
-    // Process code blocks FIRST, before any other markdown processing
-    // This will convert them to HTML elements that won't be affected by subsequent processing
-    html = html.replace(/```(.*?)\n([\s\S]*?)```/g, function(match, language, code) {
-        // Trim trailing newlines from code
-        code = code.replace(/\n+$/, '');
+class ChatApp {
+    constructor() {
+        // Initialize services
+        this.apiService = new ApiService(config.OPENROUTER_API_KEY);
+        this.chatHistoryService = new ChatHistoryService();
+        this.uiService = new UIService(this.chatHistoryService);
         
-        // Sanitize the code - this prevents HTML injection but preserves the original formatting
-        const sanitizedCode = sanitizeHTML(code);
-        
-        // Create the HTML structure for the code block immediately
-        return `<div class="code-block">
-                  <div class="code-header">
-                    <span class="code-language">${language.trim() || 'code'}</span>
-                    <div class="code-actions">
-                      <button class="code-copy-btn" aria-label="Copy code">Copy</button>
-                    </div>
-                  </div>
-                  <pre><code class="language-${language.trim() || 'plaintext'}">${sanitizedCode}</code></pre>
-                </div>`;
-    });
-    
-    // Now process the rest of the markdown, which will exclude the already-processed code blocks
-    
-    // Process tables
-    html = processMarkdownTables(html);
-    
-    // Convert inline code (but not inside already converted code blocks)
-    html = html.replace(/(`+)(?!<\/code>)(.*?)(?!\<code)((`+))/g, function(match, start, content) {
-        if (start.length === 1) {
-            return '<code class="inline-code">' + sanitizeHTML(content) + '</code>';
-        }
-        return match; // Return as is if not single backtick
-    });
-    
-    // Convert headers with Perplexity-style classes
-    html = html.replace(/^#{1,6}\s+(.*)$/gm, function(match) {
-        const level = match.trim().indexOf(' ');
-        const text = match.substring(level + 1).trim();
-        return `<h${level} class="px-header px-h${level}">${text}</h${level}>`;
-    });
-    
-    // Convert bold and italic
-    html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="px-bold">$1</strong>');
-    html = html.replace(/\*(.*?)\*/g, '<em class="px-italic">$1</em>');
-    html = html.replace(/\_\_(.*?)\_\_/g, '<strong class="px-bold">$1</strong>');
-    html = html.replace(/\_(.*?)\_/g, '<em class="px-italic">$1</em>');
-    
-    // Process lists
-    html = processUnorderedLists(html);
-    html = processOrderedLists(html);
-    
-    // Convert horizontal rules
-    html = html.replace(/^(\s*[-*_]){3,}\s*$/gm, '<hr class="px-hr">');
-    
-    // Convert links
-    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="px-link" target="_blank" rel="noopener noreferrer">$1</a>');
-    
-    // Handle blockquotes
-    html = processBlockquotes(html);
-    
-    // Convert paragraphs
-    html = processParagraphs(html);
-    
-    // Clean up extra line breaks
-    html = html.replace(/\n{2,}/g, '\n');
-    
-    // Clean up empty paragraphs
-    html = html.replace(/<p[^>]*>\s*<\/p>/g, '');
-    
-    // Wrap the entire content in a container
-    html = `<div class="px-content">${html.trim()}</div>`;
-    
-    return html;
-}
-
-/**
- * Process markdown tables
- * @param {string} html - The HTML content to process
- * @returns {string} Processed HTML with tables
- */
-function processMarkdownTables(html) {
-    // This regex finds markdown tables
-    const tableRegex = /(\|[^\n]+\|\r?\n)((?:\|:?[-]+:?)+\|)(\n(?:\|[^\n]+\|\r?\n?)*)/g;
-    
-    return html.replace(tableRegex, function(match, headerRow, delimiterRow, bodyRows) {
-        // Process header
-        const headers = headerRow.trim().split('|').slice(1, -1).map(
-            cell => `<th>${cell.trim()}</th>`
-        ).join('');
-        
-        // Process alignment from delimiter row
-        const alignments = delimiterRow.trim().split('|').slice(1, -1).map(delim => {
-            if (delim.startsWith(':') && delim.endsWith(':')) return 'center';
-            if (delim.endsWith(':')) return 'right';
-            return 'left';
-        });
-        
-        // Process body rows
-        const rows = bodyRows.trim().split('\n').map(row => {
-            const cells = row.trim().split('|').slice(1, -1);
-            const cellsHtml = cells.map((cell, i) => {
-                const align = alignments[i] ? `style="text-align:${alignments[i]}"` : '';
-                return `<td ${align}>${cell.trim()}</td>`;
-            }).join('');
-            return `<tr>${cellsHtml}</tr>`;
-        }).join('');
-        
-        return `<div class="table-wrapper"><table class="px-table">
-            <thead><tr>${headers}</tr></thead>
-            <tbody>${rows}</tbody>
-        </table></div>`;
-    });
-}
-
-/**
- * Process unordered lists
- * @param {string} html - The HTML content to process
- * @returns {string} Processed HTML with unordered lists
- */
-function processUnorderedLists(html) {
-    // Find unordered list blocks
-    const listBlocks = html.match(/(?:^|\n)(?:[ \t]*[-*+][ \t]+.+\n?)+/g);
-    
-    if (!listBlocks) return html;
-    
-    listBlocks.forEach(block => {
-        // Split into list items
-        const items = block.match(/[ \t]*[-*+][ \t]+.+(?:\n|$)/g);
-        
-        if (!items) return;
-        
-        const listItems = items.map(item => {
-            const content = item.replace(/^[ \t]*[-*+][ \t]+/, '').trim();
-            return `<li class="px-list-item">${content}</li>`;
-        }).join('');
-        
-        const listHtml = `<ul class="px-list px-unordered-list">${listItems}</ul>`;
-        html = html.replace(block, listHtml);
-    });
-    
-    return html;
-}
-
-/**
- * Process ordered lists
- * @param {string} html - The HTML content to process
- * @returns {string} Processed HTML with ordered lists
- */
-function processOrderedLists(html) {
-    // Find ordered list blocks
-    const listBlocks = html.match(/(?:^|\n)(?:[ \t]*\d+\.[ \t]+.+\n?)+/g);
-    
-    if (!listBlocks) return html;
-    
-    listBlocks.forEach(block => {
-        // Split into list items
-        const items = block.match(/[ \t]*\d+\.[ \t]+.+(?:\n|$)/g);
-        
-        if (!items) return;
-        
-        const listItems = items.map(item => {
-            const content = item.replace(/^[ \t]*\d+\.[ \t]+/, '').trim();
-            return `<li class="px-list-item">${content}</li>`;
-        }).join('');
-        
-        const listHtml = `<ol class="px-list px-ordered-list">${listItems}</ol>`;
-        html = html.replace(block, listHtml);
-    });
-    
-    return html;
-}
-
-/**
- * Process blockquotes
- * @param {string} html - The HTML content to process
- * @returns {string} Processed HTML with blockquotes
- */
-function processBlockquotes(html) {
-    // Find continuous blockquote lines
-    const quoteRegex = /(?:^|\n)(?:&gt;|>)[ \t]?(.*?)(?=\n(?!(?:&gt;|>))|$)/gs;
-    
-    return html.replace(quoteRegex, function(match, content) {
-        // Remove any trailing newlines
-        content = content.replace(/\n$/, '');
-        return `<blockquote class="px-blockquote">${content}</blockquote>`;
-    });
-}
-
-/**
- * Process paragraphs
- * @param {string} html - The HTML content to process
- * @returns {string} Processed HTML with paragraphs
- */
-function processParagraphs(html) {
-    // Split content by double newlines (paragraph breaks)
-    const paragraphs = html.split(/\n\n+/);
-    
-    return paragraphs.map(p => {
-        // Skip if empty or already contains HTML tags
-        if (!p.trim() || p.trim().match(/^<\/?[a-zA-Z]|^<blockquote|^<[uo]l|^<h[1-6]|^<hr|^<div class="code-block"|^<div class="table-wrapper"/)) {
-            return p;
-        }
-        
-        // Handle multi-line paragraphs (with single line breaks)
-        const processedP = p.replace(/\n/g, '<br>');
-        return `<p class="px-paragraph">${processedP}</p>`;
-    }).join('\n\n');
-}
-/**
- * Attaches click event listeners to all code copy buttons in the chat
- */
-function attachCodeCopyListeners() {
-    // Find all copy buttons in the chat container
-    const copyButtons = document.querySelectorAll('.code-copy-btn');
-    
-    // Add click event listener to each button
-    copyButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            // Find the closest code block
-            const codeBlock = this.closest('.code-block');
-            
-            // Get the code content
-            const codeElement = codeBlock.querySelector('code');
-            
-            // Get code text but remove any language headers or unnecessary elements
-            let codeText = codeElement.textContent;
-            
-            // Remove potential header lines that start with common comment patterns
-            // This regex identifies lines that look like headers or comments at the top of code
-            codeText = codeText.replace(/^(\/\/.*|#.*|\s*\/\*.*\*\/\s*|<!-.*->)?\n?/, '');
-            
-            // Copy to clipboard
-            navigator.clipboard.writeText(codeText)
-                .then(() => {
-                    // Show feedback that code was copied
-                    const originalText = this.textContent;
-                    this.textContent = 'Copied!';
-                    
-                    // Reset button text after a delay
-                    setTimeout(() => {
-                        this.textContent = originalText;
-                    }, 2000);
-                })
-                .catch(err => {
-                    console.error('Failed to copy text: ', err);
-                    // Show error feedback
-                    this.textContent = 'Failed!';
-                    setTimeout(() => {
-                        this.textContent = 'Copy';
-                    }, 2000);
-                });
-        });
-    });
-}
-
-/**
- * Scrolls the chat container to the bottom
- * @param {boolean} smooth - Whether to use smooth scrolling animation
- */
-function scrollToBottom(smooth = true) {
-    const chatContainer = document.getElementById('chat-container');
-    
-    // Use smooth scrolling if specified, otherwise instant scroll
-    if (smooth) {
-        chatContainer.scrollTo({
-            top: chatContainer.scrollHeight,
-            behavior: 'smooth'
-        });
-    } else {
-        chatContainer.scrollTop = chatContainer.scrollHeight;
+        // Chat state
+        this.currentChatId = null;
+        this.currentChatMessages = [];
+        this.isProcessing = false;
+        this.messageQueue = [];
     }
-}
-
-/**
- * Adds a message to the chat container with the appropriate styling and ensures proper scrolling.
- * @async
- * @function addMessage
- * @param {string} content - The message content.
- * @param {string} sender - The sender of the message ('user' or 'bot').
- */
-async function addMessage(content, sender) {
-    const chatContainer = document.getElementById('chat-container');
-    const messageDiv = document.createElement('div');
-    messageDiv.classList.add('message', sender);
-
-    // Create a container for the message content
-    const contentContainer = document.createElement('div');
-    contentContainer.classList.add('message-content');
-    messageDiv.appendChild(contentContainer);
-
-    chatContainer.appendChild(messageDiv);
     
-    // Initial scroll to bottom (might be incomplete with complex content)
-    scrollToBottom();
+    /**
+     * Initializes the chat application.
+     */
+    init() {
+        // Set up DOM elements
+        this.userInput = document.getElementById('userInput');
+        this.submitBtn = document.getElementById('submitBtn');
+        this.modeSelect = document.getElementById('mode');
+        this.settingsBtn = document.getElementById('settingsBtn');
+        this.clearBtn = document.getElementById('clearBtn');
+        this.newChatBtn = document.querySelector('.new-chat');
+        
+        // Load saved settings
+        this.loadSettings();
+        
+        // Set up event listeners
+        this.setupEventListeners();
+        
+        // Initialize sidebar
+        this.uiService.initSidebar(this.currentChatId);
+        
+        // Load initial chat
+        this.loadInitialChat();
+    }
     
-    // If the sender is the bot, convert markdown to HTML
-    if (sender === 'bot') {
-        // Convert markdown to HTML
-        const htmlContent = markdownToHTML(content);
+    /**
+     * Loads saved user settings
+     */
+    loadSettings() {
+        const savedMode = localStorage.getItem('mode') || 'api';
+        this.modeSelect.value = savedMode;
+        this.temperature = parseFloat(localStorage.getItem('temperature') || '1.0');
+    }
+    
+    /**
+     * Sets up all event listeners
+     */
+    setupEventListeners() {
+        // Submit button
+        this.submitBtn.addEventListener('click', () => this.handleSubmit());
         
-        // Set the HTML content
-        contentContainer.innerHTML = htmlContent;
+        // Enter key in input field
+        this.userInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                this.handleSubmit();
+            }
+        });
         
-        // Attach click event listeners to code copy buttons
-        attachCodeCopyListeners();
+        // Settings button
+        this.settingsBtn.addEventListener('click', () => {
+            window.location.href = 'settings.html';
+        });
         
-        // Apply fade-in animation
-        const pxContent = contentContainer.querySelector('.px-content');
-        if (pxContent) {
-            pxContent.style.opacity = '0';
-            setTimeout(() => {
-                pxContent.style.opacity = '1';
-                pxContent.style.transition = 'opacity 0.3s ease-in-out';
+        // Mode selection
+        this.modeSelect.addEventListener('change', (event) => {
+            localStorage.setItem('mode', event.target.value);
+        });
+        
+        // Clear button
+        this.clearBtn.addEventListener('click', () => {
+            this.startNewChat();
+        });
+        
+        // New chat button
+        this.newChatBtn.addEventListener('click', () => {
+            this.startNewChat();
+        });
+        
+        // Custom event for loading chat
+        document.addEventListener('loadChat', (event) => {
+            const chatId = event.detail;
+            this.loadChat(chatId);
+        });
+        
+        // Custom event for chat history changes
+        document.addEventListener('chatHistoryChanged', () => {
+            this.uiService.updateChatHistorySidebar(this.currentChatId);
+        });
+        
+        // Window beforeunload - prevent accidental closing during processing
+        window.addEventListener('beforeunload', (event) => {
+            if (this.isProcessing) {
+                event.preventDefault();
+                return event.returnValue = 'Changes you made may not be saved.';
+            }
+        });
+    }
+    
+    /**
+     * Loads the initial chat from history or starts a new one
+     */
+    loadInitialChat() {
+        const chatHistory = this.chatHistoryService.getAllChatsSorted();
+        if (chatHistory.length > 0) {
+            // Load the most recent chat
+            this.loadChat(chatHistory[0].id);
+        } else {
+            // Start a new chat
+            this.startNewChat();
+        }
+    }
+    
+    /**
+     * Handles form submission and gets AI response
+     */
+    async handleSubmit() {
+        const userMessage = this.userInput.value.trim();
+        if (!userMessage || this.isProcessing) return;
+        
+        // Add to queue if currently processing
+        if (this.isProcessing) {
+            this.messageQueue.push(userMessage);
+            // Show queued indicator
+            this.showStatusMessage('Message queued');
+            return;
+        }
+        
+        // Ensure we have a chat ID for this conversation
+        if (!this.currentChatId) {
+            this.startNewChat();
+        }
+        
+        try {
+            this.isProcessing = true;
+            this.userInput.value = '';
+            
+            // Update UI to show processing state
+            this.submitBtn.disabled = true;
+            this.submitBtn.classList.add('processing');
+            
+            // Add user message to chat
+            await this.uiService.addMessage(userMessage, 'user', this.currentChatMessages, this.currentChatId);
+            
+            // Get response based on selected mode
+            const mode = this.modeSelect.value;
+            let botResponse;
+            
+            try {
+                if (mode === 'api') {
+                    // Create context for API request
+                    const context = this.createContextForRequest(userMessage);
+                    botResponse = await this.apiService.getCompletion(context, this.temperature);
+                } else if (mode === 'random') {
+                    botResponse = this.apiService.getRandomResponse();
+                } else {
+                    botResponse = "Please select a valid mode.";
+                }
+            } catch (error) {
+                console.error('Error getting response:', error);
                 
-                // Scroll again after content is fully rendered
-                scrollToBottom();
-            }, 50);
-        }
-        
-        // Final scroll after all content and images might have loaded
-        setTimeout(() => {
-            scrollToBottom(true);
-        }, 100);
-    } else {
-        // For user messages, just display as plain text
-        contentContainer.textContent = content;
-        scrollToBottom(true);
-    }
-    
-    // Add to current chat messages
-    currentChatMessages.push({
-        content: content,
-        sender: sender,
-        timestamp: Date.now()
-    });
-    
-    // Save the updated chat
-    if (currentChatId) {
-        const title = getChatTitle(currentChatMessages);
-        chatHistoryService.saveChat(currentChatId, title, currentChatMessages);
-    }
-}
-/**
- * Loads a chat from history
- * @param {string} chatId - The ID of the chat to load
- */
-function loadChat(chatId) {
-    const chat = chatHistoryService.getChat(chatId);
-    if (!chat) return;
-    
-    // Set as current chat
-    currentChatId = chatId;
-    currentChatMessages = chat.messages;
-    
-    // Clear the chat container
-    const chatContainer = document.getElementById('chat-container');
-    chatContainer.innerHTML = '';
-    
-    // Add each message to the chat interface
-    chat.messages.forEach(msg => {
-        const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', msg.sender);
-        
-        const contentContainer = document.createElement('div');
-        contentContainer.classList.add('message-content');
-        
-        // Convert bot messages from markdown to HTML
-        if (msg.sender === 'bot') {
-            contentContainer.innerHTML = markdownToHTML(msg.content);
-        } else {
-            contentContainer.textContent = msg.content;
-        }
-        
-        messageDiv.appendChild(contentContainer);
-        chatContainer.appendChild(messageDiv);
-    });
-    
-    // Attach click event listeners to code copy buttons
-    attachCodeCopyListeners();
-    
-    // Ensure scroll to bottom after everything is loaded
-    setTimeout(() => {
-        scrollToBottom(true);
-    }, 100);
-    
-    // Update sidebar to highlight this chat
-    updateChatHistorySidebar();
-}
-
-// The rest of your code remains unchanged
-function getChatTitle(messages) {
-    if (!messages || messages.length === 0) {
-        return "New Chat";
-    }
-    
-    // Find the first user message
-    const firstUserMessage = messages.find(msg => msg.sender === 'user');
-    if (firstUserMessage) {
-        // Create a short title from the first message
-        return firstUserMessage.content.length > 20 
-            ? firstUserMessage.content.substring(0, 17) + '...'
-            : firstUserMessage.content;
-    }
-    
-    return "New Chat";
-}
-
-async function handleSubmit() {
-    const userInput = document.getElementById('userInput');
-    const userMessage = userInput.value.trim();
-    const submitBtn = document.getElementById('submitBtn');
-
-    if (!userMessage) return;
-
-    // Ensure we have a chat ID for this conversation
-    if (!currentChatId) {
-        startNewChat();
-    }
-
-    // Add user message to chat
-    await addMessage(userMessage, 'user');
-    userInput.value = '';
-
-    // Disable the submit button
-    submitBtn.disabled = true;
-
-    // Get response based on selected mode
-    const mode = document.getElementById('mode').value;
-    const temperature = parseFloat(localStorage.getItem('temperature') || '1.0');
-    let botResponse;
-
-    try {
-        if (mode === 'api') {
-            botResponse = await apiService.getCompletion(userMessage, temperature);
-        } else if (mode === 'random') {
-            botResponse = apiService.getRandomResponse();
-        } else {
-            botResponse = "Please select a valid mode.";
-        }
-    } catch (error) {
-        console.error('Error getting response:', error);
-        botResponse = "Sorry, I encountered an error. Please try again.";
-    }
-
-    // Add bot response to chat
-    await addMessage(botResponse, 'bot');
-
-    // Re-enable the submit button
-    submitBtn.disabled = false;
-}
-
-function startNewChat() {
-    // Clear the chat interface
-    document.getElementById('chat-container').innerHTML = `
-        <div class="message bot">
-            <div class="message-content">Hello! How can I help you today?</div>
-        </div>
-    `;
-    
-    // Reset current chat
-    currentChatId = chatHistoryService.generateChatId();
-    currentChatMessages = [
-        {
-            content: "Hello! How can I help you today?",
-            sender: "bot",
-            timestamp: Date.now()
-        }
-    ];
-    
-    // Save the new chat
-    chatHistoryService.saveChat(currentChatId, "New Chat", currentChatMessages);
-    
-    // Update the sidebar
-    updateChatHistorySidebar();
-}
-
-function updateChatHistorySidebar() {
-    const historyList = document.getElementById('chat-history-list');
-    historyList.innerHTML = '';
-    
-    const chats = chatHistoryService.getAllChatsSorted();
-    
-    if (chats.length === 0) {
-        const emptyItem = document.createElement('li');
-        emptyItem.textContent = "No chat history";
-        emptyItem.classList.add('empty-history');
-        historyList.appendChild(emptyItem);
-        return;
-    }
-    
-    chats.forEach(chat => {
-        const listItem = document.createElement('li');
-        listItem.textContent = chat.title;
-        listItem.setAttribute('data-chat-id', chat.id);
-        
-        // Create delete button
-        const deleteBtn = document.createElement('button');
-        deleteBtn.classList.add('chat-delete-btn');
-        deleteBtn.innerHTML = '×'; // × symbol for delete
-        deleteBtn.setAttribute('aria-label', 'Delete chat');
-        
-        // Add event listener to delete button
-        deleteBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent the click from bubbling up to the list item
-            deleteChat(chat.id);
-        });
-        
-        // Append delete button to list item
-        listItem.appendChild(deleteBtn);
-        
-        // Highlight the current chat
-        if (chat.id === currentChatId) {
-            listItem.classList.add('active-chat');
-        }
-        
-        listItem.addEventListener('click', () => {
-            loadChat(chat.id);
-        });
-        
-        historyList.appendChild(listItem);
-    });
-}
-
-function deleteChat(chatId) {
-    // Delete the chat from storage
-    chatHistoryService.deleteChat(chatId);
-    
-    // If the deleted chat was the current chat, start a new one
-    if (chatId === currentChatId) {
-        startNewChat();
-    }
-    
-    // Update the sidebar
-    updateChatHistorySidebar();
-}
-
-function initSidebar() {
-    const sidebarToggle = document.getElementById('sidebar-toggle');
-    const sidebar = document.getElementById('sidebar');
-    const chatWrapper = document.getElementById('chat-wrapper');
-    const body = document.body;
-    
-    // Check if sidebar was previously hidden
-    const sidebarHidden = localStorage.getItem('sidebarHidden') === 'true';
-    
-    // Set initial state
-    if (sidebarHidden) {
-        sidebar.classList.add('hidden-sidebar');
-        chatWrapper.classList.add('full-width');
-        body.classList.add('sidebar-hidden');
-    }
-    
-    // Toggle function
-    sidebarToggle.addEventListener('click', () => {
-        sidebar.classList.toggle('hidden-sidebar');
-        chatWrapper.classList.toggle('full-width');
-        body.classList.toggle('sidebar-hidden');
-
-        // Get current state
-        const isSidebarHidden = document.body.classList.contains('sidebar-hidden');
-        
-        // Add transition class
-        this.style.transition = "transform 0.5s ease, left 0.5s ease, right 0.5s ease";
-        
-        // If we're on mobile, add a sliding animation
-        if (window.innerWidth <= 768) {
-            if (isSidebarHidden) {
-            // Sidebar will become visible, slide button to right
-            this.style.transform = "translateX(100vw)";
-            } else {
-            // Sidebar will be hidden, slide button to left
-            this.style.transform = "translateX(-100vw)";
+                // Handle different types of errors
+                if (error.name === 'AbortError') {
+                    botResponse = "Request was cancelled. Please try again.";
+                } else if (error.message.includes('network')) {
+                    botResponse = "Network error. Please check your connection and try again.";
+                } else if (error.status === 429) {
+                    botResponse = "Rate limit exceeded. Please wait a moment before trying again.";
+                } else {
+                    botResponse = "Sorry, I encountered an error. Please try again.";
+                }
             }
             
-            // After a small delay, toggle the sidebar and reset the button
-            setTimeout(() => {
-            document.body.classList.toggle('sidebar-hidden');
-            this.style.transform = "";
-            }, 250);
+            // Add bot response to chat
+            await this.uiService.addMessage(botResponse, 'bot', this.currentChatMessages, this.currentChatId);
+        } finally {
+            // Reset UI state
+            this.isProcessing = false;
+            this.submitBtn.disabled = false;
+            this.submitBtn.classList.remove('processing');
             
-        } else {
-            // On desktop, just toggle normally
-            document.body.classList.toggle('sidebar-hidden');
+            // Process next message in queue if any
+            this.processNextInQueue();
+        }
+    }
+    
+    /**
+     * Creates a context object for the API request
+     * @param {string} userMessage - The current user message
+     * @returns {object} - The context object
+     */
+    createContextForRequest(userMessage) {
+        // Create a simplified context for the API
+        // Could include recent message history for better continuity
+        const recentMessages = this.currentChatMessages
+            .slice(-5) // Last 5 messages for context
+            .map(msg => ({
+                role: msg.sender === 'user' ? 'user' : 'assistant',
+                content: msg.content
+            }));
+            
+        return {
+            messages: recentMessages,
+            currentMessage: userMessage
+        };
+    }
+    
+    /**
+     * Processes the next message in the queue if any
+     */
+    processNextInQueue() {
+        if (this.messageQueue.length > 0 && !this.isProcessing) {
+            const nextMessage = this.messageQueue.shift();
+            this.userInput.value = nextMessage;
+            this.handleSubmit();
+        }
+    }
+    
+    /**
+     * Shows a temporary status message
+     * @param {string} message - The status message to show
+     */
+    showStatusMessage(message) {
+        const statusElement = document.createElement('div');
+        statusElement.classList.add('status-message');
+        statusElement.textContent = message;
+        
+        document.body.appendChild(statusElement);
+        
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            statusElement.classList.add('fade-out');
+            setTimeout(() => {
+                document.body.removeChild(statusElement);
+            }, 500);
+        }, 2500);
+    }
+    
+    /**
+     * Loads a chat from history
+     * @param {string} chatId - The ID of the chat to load
+     */
+    loadChat(chatId) {
+        if (this.isProcessing) {
+            this.showStatusMessage('Please wait until current processing is complete');
+            return;
         }
         
-        // Store sidebar state for persistence
-        const isHidden = sidebar.classList.contains('hidden-sidebar');
-        localStorage.setItem('sidebarHidden', isHidden);
-    });
-    
-    // Initialize chat history in sidebar
-    updateChatHistorySidebar();
-    
-    // Set up listener for history changes
-    document.addEventListener('chatHistoryChanged', updateChatHistorySidebar);
-    
-    // Set up new chat button
-    const newChatBtn = document.querySelector('.new-chat');
-    newChatBtn.addEventListener('click', startNewChat);
-}
-
-
-/**
- * Initializes the chat application.
- */
-function initApp() {
-
-    // Load saved mode
-    const savedMode = localStorage.getItem('mode') || 'api';
-    document.getElementById('mode').value = savedMode;
-    
-    // Set up event listeners
-    document.getElementById('submitBtn').addEventListener('click', handleSubmit);
-    
-    document.getElementById('userInput').addEventListener('keypress', (event) => {
-        if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault();
-            handleSubmit();
+        const chatData = this.uiService.loadChat(chatId);
+        if (chatData) {
+            this.currentChatId = chatData.currentChatId;
+            this.currentChatMessages = chatData.currentChatMessages;
         }
-    });
+    }
     
-    document.getElementById('settingsBtn').addEventListener('click', () => {
-        window.location.href = 'settings.html'
-    });
-    
-    document.getElementById('mode').addEventListener('change', (event) => {
-        localStorage.setItem('mode', event.target.value);
-    });
-    
-    document.getElementById('clearBtn').addEventListener('click', () => {
-        startNewChat();
-    });
-    
-    // Initialize sidebar
-    initSidebar();
-    
-    // Start a new chat session or load the last chat
-    const chatHistory = chatHistoryService.getAllChatsSorted();
-    if (chatHistory.length > 0) {
-        // Load the most recent chat
-        loadChat(chatHistory[0].id);
-    } else {
-        // Start a new chat
-        startNewChat();
+    /**
+     * Starts a new chat
+     */
+    startNewChat() {
+        if (this.isProcessing) {
+            this.showStatusMessage('Please wait until current processing is complete');
+            return;
+        }
+        
+        const chatData = this.uiService.startNewChat();
+        this.currentChatId = chatData.currentChatId;
+        this.currentChatMessages = chatData.currentChatMessages;
+        
+        // Clear input field
+        if (this.userInput) {
+            this.userInput.value = '';
+            this.userInput.focus();
+        }
     }
 }
+
 // Initialize the app when DOM content is loaded
-document.addEventListener('DOMContentLoaded', initApp);
+document.addEventListener('DOMContentLoaded', () => {
+    const chatApp = new ChatApp();
+    chatApp.init();
+});
