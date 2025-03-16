@@ -1,11 +1,9 @@
 import { config } from './config.js';
 import { ApiService } from './services/apiService.js';
-import { UiService } from './services/uiService.js';
 import { ChatHistoryService } from './services/chatHistoryService.js';
 
 // Initialize services
 const apiService = new ApiService(config.OPENROUTER_API_KEY);
-const uiService = new UiService();
 const chatHistoryService = new ChatHistoryService();
 
 // Keep track of current chat
