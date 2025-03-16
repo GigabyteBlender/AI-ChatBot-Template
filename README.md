@@ -4,91 +4,132 @@
 
 This project is a modern web-based chat interface that integrates with AI services through the OpenRouter API. The interface includes multiple interaction modes, a persistent chat history feature, and a customizable settings panel. It provides a complete chat application experience with all the features you would need.
 
-## Key Components
+# AI Chatbot Interface
 
-### Core Files
-* **`index.html`**: Main HTML structure for the chat interface, including sidebar, chat display area, and controls
-* **`style.css`**: Comprehensive styling for the entire application with responsive design and theme support
-* **`script.js`**: Core application logic including message handling, UI interactions, and API communication. Also formats all the chats
-* **`config.js`**: Configuration file for API keys and development utilities
-* **`settings.html`**: Settings interface with adjustable parameters for the chat experience
-* **`settings.js`**: JavaScript for handling settings functionality and preferences
+![Chat Interface Example](assets/example.jpg)
 
-### Services
-* **`services/apiService.js`**: Manages API interactions with OpenRouter
-* **`services/uiService.js`**: Handles UI-related functionality
-* **`services/chatHistoryService.js`**: Manages persistent chat history functionality
+## Overview
+
+A comprehensive web-based chat interface that integrates with AI services through OpenRouter API. This application provides a professional, responsive interface with multiple AI models, persistent chat history, and customizable settings.
 
 ## Features
 
-### User Interface
-* Responsive design that works across desktop and mobile devices
-* Collapsible sidebar for chat history navigation
-* Real-time message display with customizable typing animation
-* default dark colour scheme
-* Message input area with support for shift+enter for line breaks
+### 🚀 Core Functionality
+- **Multiple AI Model Support**: Connect to various AI models including Gemini, DeepSeek, Rogue Rose, and more
+- **Persistent Chat History**: Conversations automatically saved to local storage
+- **Multi-chat Management**: Create and manage multiple conversations
 
-### Current Interface:
-![Photo](assets/example.jpg)
+### 💎 User Experience
+- **Responsive Design**: Seamless experience across desktop and mobile devices
+- **Collapsible Sidebar**: Toggle chat history panel for more screen space
+- **Markdown Rendering**: Beautiful formatting for AI responses including:
+  - Syntax-highlighted code blocks with copy button
+  - Tables, lists, blockquotes, and other formatting
+  - Headers and text styling
 
-### Chat Functionality
-* Persistent chat history stored in local storage
-* Converts the chats from mark down to html for correct format
-* code is now kept in code-spaces where you are able to copy it easily
-* Multiple conversation management
-* Option to clear current chat
+### ⚙️ Advanced Options
+- **Customizable Settings**:
+  - Adjust typing speed for bot responses
+  - Control response creativity via temperature setting
+  - Select from multiple AI models
+- **API Monitoring**: Cancel in-progress requests when needed
+- **Development Mode**: Test with random responses to save API usage
 
-### API Integration
-* Integration with OpenRouter API for AI model access
-* Support for different AI models including Gemini, Deepseek and many others
-* Random response mode for application testing without API consumption
-* Configurable temperature setting for response creativity
+## Project Structure
+
+```
+├── index.html              # Main application structure
+├── style.css               # UI styling with dark mode support
+├── script.js               # Core application logic
+├── config.js               # API configuration
+├── settings.html           # Settings interface
+├── settings.js             # Settings management
+├── services/
+│   ├── apiService.js       # OpenRouter API integration
+│   ├── chatHistoryService.js  # History persistence
+│   ├── markdownService.js  # Markdown-to-HTML conversion
+│   └── uiService.js        # UI rendering and interactions
+```
+
+## Getting Started
+
+### Prerequisites
+- Web server for hosting the application
+- OpenRouter API key
+
+### Installation
+
+1. Clone the repository:
+   ```
+   git clone https://github.com/yourusername/ai-chatbot-interface.git
+   cd ai-chatbot-interface
+   ```
+
+2. Create a `config.js` file with your API key:
+   ```javascript
+   export const config = {
+       OPENROUTER_API_KEY: 'your-api-key-here'
+   };
+
+   // For development only
+   export const getTestKey = () => {
+       console.warn("Using test key - not for production use");
+       return sessionStorage.getItem('temp_dev_key') || '';
+   };
+   ```
+
+3. Deploy the files to your web server or run locally with a development server.
+
+## Usage
+
+### Chat Interface
+- Type messages in the input field and press Enter or click Send
+- Use Shift+Enter for multi-line messages
+- Toggle the sidebar using the button on the left
+- Start new conversations with the "New Chat" button
 
 ### Settings
-* Adjustable typing speed for bot responses
-* Controllable response creativity through temperature setting 
-* Model selection options. Current models to choose from:
+Access settings by clicking the gear icon to:
+- Select your preferred AI model
+- Adjust response temperature (creativity)
+- Set typing animation speed
+- Choose between API and random response modes
 
-```text
-Gemini 2.0 Flash,
-DeepSeek R1 Zero,
-Rogue Rose v0.2,
-DeepSeek V3,
-Dolphin3.0 Mistral
+## Available AI Models
+
+Currently supported models include:
+```
+- Gemini 2.0 Flash
+- DeepSeek R1 Zero
+- Rogue Rose v0.2
+- DeepSeek V3
+- Dolphin3.0 Mistral
 ```
 
-## Configuration
+## Technical Implementation
 
-To configure the application:
+### Key Components
+- **ChatApp**: Core application class that coordinates services
+- **ApiService**: Handles API communication with error handling
+- **ChatHistoryService**: Manages saving/loading conversations
+- **UIService**: Renders messages and manages the interface
+- **MarkdownService**: Converts markdown to formatted HTML
 
-1. Create a `config.js` file in the root directory with your API keys:
+### Security Considerations
+- The app uses client-side storage for conversations
+- API keys should be properly managed using environment variables in production
+- Input sanitization is implemented to prevent XSS attacks
 
-```javascript
-// config.js - Environment variables should be used instead of hardcoding
-export const config = {
-    // Use environment variables or a secure method to store API keys
-    OPENROUTER_API_KEY: 'your-api-key-here'
-};
+## Roadmap
 
-// For development testing only, never use this in production
-export const getTestKey = () => {
-    console.warn("Using test key - not for production use");
-    return sessionStorage.getItem('temp_dev_key') || '';
-};
-```
+Planned improvements:
+- User authentication
+- Server-side database for chat history
+- File upload and attachment support
+- Conversation summarization
+- Chat export functionality
+- Extended model selection options
 
-2. Update the model selection in `settings.html` if needed to match your preferred AI models.
+## License
 
-## Security Considerations
-
-* The current implementation includes API keys directly in the code, which should be avoided in production
-* For a production deployment, implement proper API key management using environment variables
-* Consider adding authentication for user-specific chat histories
-
-## Future Improvements
-
-* Add user authentication for personalized experiences
-* Implement database for chat history (currently using local storage)
-* Add support for file uploads and attachments
-* Implement conversation summarization
-* Add export functionality for chat logs
+This project is licensed under the MIT License - see the LICENSE file for details.
