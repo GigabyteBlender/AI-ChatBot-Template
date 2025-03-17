@@ -18,7 +18,7 @@ We take the security of the AI Chatbot Interface seriously. We appreciate your e
 If you believe you've found a security vulnerability in our project, please follow these steps:
 
 1. **Do not** disclose the vulnerability publicly on GitHub Issues, Discord, or any other public forum.
-2. Email your findings to me [dan.pertu@gmail.com]. If you don't receive a response within 48 hours, please follow up.
+2. Email your findings to me [dan.pertu@gmail.com](dan.pertu@gmail.com). If you don't receive a response within 48 hours, please follow up.
 3. Include the following information in your report:
    - Description of the vulnerability
    - Steps to reproduce the issue
