@@ -297,9 +297,6 @@ export class UIService {
             chatWrapper.classList.toggle('full-width');
             body.classList.toggle('sidebar-hidden');
 
-            // Get current state
-            const isSidebarHidden = body.classList.contains('sidebar-hidden');
-            
             // Store sidebar state for persistence
             const isHidden = sidebar.classList.contains('hidden-sidebar');
             localStorage.setItem('sidebarHidden', isHidden);
