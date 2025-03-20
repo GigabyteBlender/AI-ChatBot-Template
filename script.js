@@ -81,7 +81,7 @@ class ChatApp {
         
         // Clear button
         this.clearBtn.addEventListener('click', () => {
-            this.startNewChat();
+            this.uiService.clearCurrentChat();
         });
         
         // New chat button

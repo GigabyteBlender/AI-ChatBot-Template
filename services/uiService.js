@@ -96,6 +96,62 @@ export class UIService {
     }
 
     /**
+     * Clears the current chat messages but keeps the same chat ID
+     */
+    clearCurrentChat() {
+        if (this.isProcessing) {
+            this.showStatusMessage('Please wait until current processing is complete');
+            return;
+        }
+        
+        // Get reference to the chat container
+        const chatContainer = document.getElementById('chat-container');
+        
+        // Clear the chat container
+        chatContainer.innerHTML = `
+            <div class="message bot">
+                <div class="message-content">Chat cleared. How can I help you?</div>
+            </div>
+        `;
+        
+        // Reset messages but keep the same chat ID
+        this.currentChatMessages = [
+            {
+                content: "Chat cleared. How can I help you?",
+                sender: "bot",
+                timestamp: Date.now()
+            }
+        ];
+        
+        // Make sure we update the chat in storage
+        if (this.currentChatId) {
+            // Get the current chat from storage
+            const chat = this.chatHistoryService.getChat(this.currentChatId);
+            if (chat) {
+                // Update the existing title or use a new one
+                const title = chat.title || "Cleared Chat";
+                // Explicitly save the cleared state
+                this.chatHistoryService.saveChat(
+                    this.currentChatId, 
+                    title, 
+                    this.currentChatMessages
+                );
+
+                console.log(title, this.currentChatId, this.currentChatMessages);
+                
+                // Force update the sidebar to reflect changes
+                this.updateChatHistorySidebar(this.currentChatId);
+            }
+        }
+        
+        // Focus the input field
+        if (this.userInput) {
+            this.userInput.value = '';
+            this.userInput.focus();
+        }
+    }
+
+    /**
      * Loads a chat from history
      * @param {string} chatId - The ID of the chat to load
      * @returns {Object} - The loaded chat data including messages and updated currentChatId
