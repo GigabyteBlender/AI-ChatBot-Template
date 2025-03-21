@@ -1,5 +1,3 @@
-/* Modern CSS Reset */
-
 *, *::before, *::after {
     box-sizing: border-box;
   }
@@ -29,13 +27,17 @@
   :root {
     --primary-color: #2563eb;
     --primary-hover: #1d4ed8;
-    --light-bg: #1a1a1a; /* Dark background */
+    --text-color: #333333;
     --dark-bg: #1a1a1a; /* Dark background */
     --light-text: #f0f0f0; /* Light text */
-    --dark-text: #f0f0f0; /* Light text */
     --user-msg-bg: #1d4ed8; /* Darker user message */
     --user-msg-dark-bg: #1d4ed8;
+    --highlight-color: #007bff;
+    --card-bg: #3c3c3c;
+    --secondary-color: #6c757d;
+    --danger-color: #dc3545;
     --bot-msg-bg: #464646; /* Darker bot message */
+    --shadow-color: rgba(0, 0, 0, 0.1);
     --bot-msg-dark-bg: #464646;
     --border-radius: 10px;
     --sidebar-width: 280px;
@@ -621,6 +623,163 @@
     border-radius: 50%;
     background-color: var(--primary-color);
     cursor: pointer;
+  }
+  
+  /* Toggle Switch */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+  }
+
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--secondary-color);
+    transition: .3s;
+  }
+
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .3s;
+  }
+
+  input:checked + .slider {
+    background-color: var(--highlight-color);
+  }
+
+  input:focus + .slider {
+    box-shadow: 0 0 1px var(--highlight-color);
+  }
+
+  input:checked + .slider:before {
+    transform: translateX(27px);
+  }
+
+  .slider.round {
+    border-radius: 24px;
+  }
+
+  .slider.round:before {
+    border-radius: 50%;
+  }
+
+  /* Toggle Control Layout */
+  .toggle-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .toggle-control .setting-description {
+    margin-top: 8px;
+    width: 100%;
+  }
+
+  /* Action Buttons */
+  .settings-action-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+  }
+
+  .settings-button-danger {
+    background-color: var(--dark-bg);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .settings-button-secondary {
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-right: 8px;
+    cursor: pointer;
+  }
+
+  .settings-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+  }
+
+  /* Modal */
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .modal.hidden {
+    display: none;
+  }
+
+  .modal-content {
+    background-color: var(--card-bg);
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 4px 12px var(--shadow-color);
+  }
+
+  .modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+    gap: 10px;
+  }
+
+  .modal-button-secondary {
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .modal-button-primary {
+    background-color: var(--highlight-color);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  /* Utility Classes */
+  .hidden {
+    display: none !important;
   }
   
   .setting-description {

@@ -52,6 +52,12 @@ class ChatApp {
         const savedMode = localStorage.getItem('mode') || 'api';
         this.modeSelect.value = savedMode;
         this.temperature = parseFloat(localStorage.getItem('temperature') || '1.0');
+        
+        // Apply font size to chat messages if needed
+        const fontSize = localStorage.getItem('fontSize');
+        if (fontSize) {
+            document.documentElement.style.setProperty('--message-font-size', `${fontSize}px`);
+        }
     }
     
     /**
