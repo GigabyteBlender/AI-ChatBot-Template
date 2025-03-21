@@ -29,7 +29,11 @@ A comprehensive web-based chat interface that integrates with AI services throug
 
 ### ⚙️ Advanced Options
 - **Customizable Settings**:
-  - Adjust typing speed for bot responses
+  - Adjust display speed for bot responses
+  - Auto clearing chat option
+  - Storage limit for chats
+  - Buttons for importing and exporting a .json with your settings
+  - Context length for how many conversation are included in api call
   - Control response creativity via temperature setting
   - Select from multiple AI models
 - **API Monitoring**: Cancel in-progress requests when needed
