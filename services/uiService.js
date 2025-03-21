@@ -3,6 +3,9 @@ import { markdownToHTML, attachCodeCopyListeners } from './markdownService.js';
 export class UIService {
     constructor(chatHistoryService) {
         this.chatHistoryService = chatHistoryService;
+        // Add reference to track current chat state
+        this.currentChatId = null;
+        this.currentChatMessages = [];
     }
 
     /**
@@ -43,6 +46,10 @@ export class UIService {
         messageDiv.appendChild(contentContainer);
 
         chatContainer.appendChild(messageDiv);
+        
+        // Store references to current chat state
+        this.currentChatId = currentChatId;
+        this.currentChatMessages = currentChatMessages;
         
         // Initial scroll to bottom (might be incomplete with complex content)
         this.scrollToBottom();
@@ -99,11 +106,6 @@ export class UIService {
      * Clears the current chat messages but keeps the same chat ID
      */
     clearCurrentChat() {
-        if (this.isProcessing) {
-            this.showStatusMessage('Please wait until current processing is complete');
-            return;
-        }
-        
         // Get reference to the chat container
         const chatContainer = document.getElementById('chat-container');
         
@@ -114,8 +116,8 @@ export class UIService {
             </div>
         `;
         
-        // Reset messages but keep the same chat ID
-        this.currentChatMessages = [
+        // Reset the messages array with just the welcome message
+        const clearedMessages = [
             {
                 content: "Chat cleared. How can I help you?",
                 sender: "bot",
@@ -123,21 +125,23 @@ export class UIService {
             }
         ];
         
+        // Update the internal messages array
+        this.currentChatMessages = clearedMessages;
+        
         // Make sure we update the chat in storage
         if (this.currentChatId) {
             // Get the current chat from storage
             const chat = this.chatHistoryService.getChat(this.currentChatId);
             if (chat) {
-                // Update the existing title or use a new one
+                // Keep the existing title
                 const title = chat.title || "Cleared Chat";
-                // Explicitly save the cleared state
+                
+                // Save the cleared state to storage
                 this.chatHistoryService.saveChat(
                     this.currentChatId, 
                     title, 
-                    this.currentChatMessages
+                    clearedMessages
                 );
-
-                console.log(title, this.currentChatId, this.currentChatMessages);
                 
                 // Force update the sidebar to reflect changes
                 this.updateChatHistorySidebar(this.currentChatId);
@@ -145,9 +149,10 @@ export class UIService {
         }
         
         // Focus the input field
-        if (this.userInput) {
-            this.userInput.value = '';
-            this.userInput.focus();
+        const userInput = document.getElementById('userInput');
+        if (userInput) {
+            userInput.value = '';
+            userInput.focus();
         }
     }
 
@@ -193,6 +198,10 @@ export class UIService {
         
         // Update sidebar to highlight this chat
         this.updateChatHistorySidebar(chatId);
+        
+        // Update internal state references
+        this.currentChatId = chatId;
+        this.currentChatMessages = chat.messages;
         
         return {
             currentChatId: chatId,
@@ -243,6 +252,10 @@ export class UIService {
                 timestamp: Date.now()
             }
         ];
+        
+        // Update internal state references
+        this.currentChatId = chatId;
+        this.currentChatMessages = chatMessages;
         
         // Save the new chat
         this.chatHistoryService.saveChat(chatId, "New Chat", chatMessages);
