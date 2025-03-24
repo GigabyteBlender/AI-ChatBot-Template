@@ -1,6 +1,4 @@
-
 export class ApiService {
-
     /**
      * Creates a new ApiService instance
      * @param {string} apiKey - The API key for authentication
@@ -8,16 +6,43 @@ export class ApiService {
     constructor(apiKey) {
         this.apiKey = apiKey;
         this.API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-        this.MODEL = localStorage.getItem('model') || 'google/gemini-2.0-flash-lite-preview-02-05:free';
+        this.loadSettings();
+    }
+    
+    /**
+     * Load settings from localStorage
+     */
+    loadSettings() {
+        // Get model setting
+        const model = localStorage.getItem('model') || 'google/gemini-2.0-flash-lite-preview-02-05:free';
+        
+        // Check if we're using a custom model
+        if (model === 'custom') {
+            const customModel = localStorage.getItem('customModel');
+            this.MODEL = customModel && customModel.trim() !== '' 
+                ? customModel 
+                : 'google/gemini-2.0-flash-lite-preview-02-05:free';
+        } else {
+            this.MODEL = model;
+        }
+        
+        // Load max context setting
+        this.maxContext = parseInt(localStorage.getItem('maxContext')) || 5;
+        
+        // Default temperature
+        this.defaultTemperature = parseFloat(localStorage.getItem('temperature')) || 1.0;
     }
     
     /**
      * Gets a completion from the API
      * @param {object|string} input - The input text or context object
-     * @param {number} temperature - The creativity level (0.0 to 1.0)
+     * @param {number} temperature - The creativity level (0.0 to 2.0)
      * @returns {Promise<string>} - The completion text
      */
-    async getCompletion(input, temperature = 1.0) {
+    async getCompletion(input, temperature = null) {
+        // Use provided temperature or default from settings
+        const tempToUse = temperature !== null ? temperature : this.defaultTemperature;
+        
         // Cancel any existing requests
         if (this.controller) {
             this.controller.abort();
@@ -28,8 +53,6 @@ export class ApiService {
         
         try {
             let messages;
-
-            
             
             // Check if input is a context object or just a string
             if (typeof input === 'object' && input.messages) {
@@ -49,6 +72,21 @@ export class ApiService {
                         role: 'user',
                         content: input.currentMessage
                     });
+                }
+                
+                // Apply max context limit if set
+                if (this.maxContext > 0 && messages.length > this.maxContext + 2) {
+                    // Keep system message (index 0), and take the last maxContext messages
+                    // +2 accounts for system message and the latest user message
+                    const systemMessage = messages.find(m => m.role === 'system');
+                    const limitedMessages = messages.slice(-this.maxContext);
+                    
+                    // If we found a system message, add it back at the beginning
+                    if (systemMessage) {
+                        limitedMessages.unshift(systemMessage);
+                    }
+                    
+                    messages = limitedMessages;
                 }
             } else {
                 // Simple string input, create a basic message
@@ -71,9 +109,9 @@ export class ApiService {
                     'Authorization': `Bearer ${this.apiKey}`
                 },
                 body: JSON.stringify({
-                    model: this.MODEL, // Default model or make configurable
+                    model: this.MODEL,
                     messages: messages,
-                    temperature: temperature,
+                    temperature: tempToUse,
                     max_tokens: 1000
                 }),
                 signal: this.controller.signal
@@ -152,5 +190,13 @@ export class ApiService {
             this.controller.abort();
             this.controller = null;
         }
+    }
+    
+    /**
+     * Refresh settings
+     * Call this method whenever settings might have changed
+     */
+    refreshSettings() {
+        this.loadSettings();
     }
 }

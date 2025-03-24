@@ -1,6 +1,14 @@
 export class ChatHistoryService {
     constructor() {
         this.storageKey = 'chat_history';
+        // Load settings
+        this.maxStorageCount = parseInt(localStorage.getItem('storageLimit')) || 0;
+        this.autoClearDays = parseInt(localStorage.getItem('autoClear')) || 0;
+        
+        // Handle auto-clearing if enabled
+        if (this.autoClearDays > 0) {
+            this.performAutoClear();
+        }
     }
 
     /**
@@ -24,12 +32,62 @@ export class ChatHistoryService {
             preview: this.generatePreview(messages)
         };
         
+        // Apply storage limit if set
+        if (this.maxStorageCount > 0) {
+            this.enforceStorageLimit(history);
+        }
+        
         localStorage.setItem(this.storageKey, JSON.stringify(history));
         
         // Notify any listeners that history has changed
         this.dispatchHistoryChangeEvent();
         
         return history[id];
+    }
+    
+    /**
+     * Enforce the maximum storage count limit
+     * @param {Object} history - The chat history object
+     */
+    enforceStorageLimit(history) {
+        const chats = Object.values(history).sort((a, b) => b.timestamp - a.timestamp);
+        
+        // If we have more chats than allowed
+        if (chats.length > this.maxStorageCount) {
+            // Get the chats that need to be removed (oldest first)
+            const chatsToRemove = chats.slice(this.maxStorageCount);
+            
+            // Remove each chat from the history object
+            chatsToRemove.forEach(chat => {
+                delete history[chat.id];
+            });
+        }
+    }
+    
+    /**
+     * Perform auto-clearing of chats older than the specified number of days
+     */
+    performAutoClear() {
+        if (this.autoClearDays <= 0) return;
+        
+        const history = this.getAllChats();
+        const now = Date.now();
+        const cutoffTime = now - (this.autoClearDays * 24 * 60 * 60 * 1000);
+        let hasChanges = false;
+        
+        // Check each chat
+        Object.keys(history).forEach(chatId => {
+            if (history[chatId].timestamp < cutoffTime) {
+                delete history[chatId];
+                hasChanges = true;
+            }
+        });
+        
+        // Save changes if any chats were removed
+        if (hasChanges) {
+            localStorage.setItem(this.storageKey, JSON.stringify(history));
+            this.dispatchHistoryChangeEvent();
+        }
     }
     
     /**
