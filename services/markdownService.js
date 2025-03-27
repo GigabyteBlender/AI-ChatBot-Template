@@ -130,6 +130,7 @@ function processMarkdownTables(html) {
         }).join('');
         
         return `<div class="markdown-table-wrapper">
+            <br>
             <table>
                 <thead><tr>${headers}</tr></thead>
                 <tbody>${rows}</tbody>
