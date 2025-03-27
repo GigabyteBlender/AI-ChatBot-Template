@@ -130,27 +130,6 @@ function processMarkdownTables(html) {
         }).join('');
         
         return `<div class="markdown-table-wrapper">
-            <style>
-                .markdown-table-wrapper table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-bottom: 1rem;
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                }
-                .markdown-table-wrapper th, 
-                .markdown-table-wrapper td {
-                    border: 1px solid #ddd;
-                    padding: 8px;
-                    line-height: 1.42857;
-                }
-                .markdown-table-wrapper th {
-                    background-color:rgb(87, 87, 87);
-                    font-weight: bold;
-                }
-                .markdown-table-wrapper tr:nth-child(even) {
-                    background-color:rgb(88, 88, 88);
-                }
-            </style>
             <table>
                 <thead><tr>${headers}</tr></thead>
                 <tbody>${rows}</tbody>
