@@ -196,7 +196,7 @@ Currently supported models include:
 
 ### Frontend
 - Can be deployed to any static web hosting service (Netlify, Vercel, GitHub Pages)
-- Update the `DatabaseUrl.API_URL` in config.js to point to your backend
+- Update the config.js with your key and the database url
 
 ### Backend
 - Deploy to a server that supports Python (Heroku, DigitalOcean, AWS, etc.)
