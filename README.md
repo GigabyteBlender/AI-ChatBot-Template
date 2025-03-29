@@ -16,8 +16,9 @@ A comprehensive web-based chat interface that integrates with AI services throug
 
 ### 🚀 Core Functionality
 - **Multiple AI Model Support**: Connect to various AI models including Gemini, DeepSeek, Rogue Rose, and more
-- **Persistent Chat History**: Conversations automatically saved to local storage
+- **Persistent Chat History**: Conversations saved to both local storage and database
 - **Multi-chat Management**: Create and manage multiple conversations
+- **User Authentication**: Register and login to access your chats across devices
 
 ### 💎 User Experience
 - **Responsive Design**: Seamless experience across desktop and mobile devices
@@ -42,6 +43,7 @@ A comprehensive web-based chat interface that integrates with AI services throug
 ## Project Structure
 
 ```
+Frontend -
 ├── index.html              # Main application structure
 ├── style.css               # UI styling with dark mode support
 ├── script.js               # Core application logic
@@ -53,15 +55,22 @@ A comprehensive web-based chat interface that integrates with AI services throug
 │   ├── chatHistoryService.js  # History persistence
 │   ├── markdownService.js  # Markdown-to-HTML conversion
 │   └── uiService.js        # UI rendering and interactions
+
+Backend -
+├── database.py         # Backend Flask API for user authentication and chat storage
 ```
 
 ## Getting Started
 
 ### Prerequisites
-- Web server for hosting the application
+- Web server for hosting the frontend application
+- Python 3.7+ for the backend server
 - OpenRouter API key
+- SQLite (default) or PostgreSQL database
 
 ### Installation
+
+#### Frontend Setup
 
 1. Clone the repository:
    ```
@@ -69,12 +78,15 @@ A comprehensive web-based chat interface that integrates with AI services throug
    cd ai-chatbot-interface
    ```
 
-2. Create a `config.js` file with your API key:
+2. Create a `config.js` file with your API keys:
    ```javascript
    export const config = {
        OPENROUTER_API_KEY: 'your-api-key-here'
    };
 
+   export const DatabaseUrl = {
+       API_URL: 'base-databse-url-here/api'  // Update with your backend URL
+   }
    // For development only
    export const getTestKey = () => {
        console.warn("Using test key - not for production use");
@@ -84,6 +96,57 @@ A comprehensive web-based chat interface that integrates with AI services throug
 
 3. Deploy the files to your web server or run locally with a development server.
 
+#### Backend Setup
+
+1. Install Python dependencies:
+   ```
+   pip install flask flask-cors flask-sqlalchemy pyjwt werkzeug
+   ```
+
+2. Configure environment variables (optional):
+   ```
+   export DATABASE_URL="postgresql://username:password@localhost/dbname"  # Default is SQLite
+   export SECRET_KEY="your-secret-key-here"  # For JWT token generation
+   ```
+
+3. Run the backend server:
+   ```
+   python database.py
+   ```
+
+## Database Features
+
+The application uses a Flask backend (`database.py`) with SQLAlchemy to provide:
+
+- **User Authentication**: Register and login with username/email/password
+- **JWT Token Authentication**: Secure API access with JWT tokens
+- **Chat Persistence**: Store and retrieve chat history from the database
+- **User Settings**: Personalized settings stored per user
+- **Auto-Clear Functionality**: Automatically remove old chats based on user preferences
+- **Storage Limits**: Control the number of stored chats per user
+
+### Database Models
+
+- **User**: Stores user credentials and authentication information
+- **Chat**: Contains chat metadata (title, preview, timestamp)
+- **Message**: Individual messages within chats
+- **Setting**: User-specific application settings
+
+### API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/register` | POST | Create a new user account |
+| `/api/login` | POST | Authenticate and get JWT token |
+| `/api/settings` | GET/POST | Retrieve or update user settings |
+| `/api/chats` | GET | Get all user chats |
+| `/api/chats/sorted` | GET | Get chats sorted by timestamp |
+| `/api/chats/<chat_id>` | GET | Get a specific chat with messages |
+| `/api/chats` | POST | Save or update a chat |
+| `/api/chats/<chat_id>` | DELETE | Delete a specific chat |
+| `/api/chats` | DELETE | Clear all user chats |
+| `/api/generate-chat-id` | GET | Generate a unique chat ID |
+
 ## Usage
 
 ### Chat Interface
@@ -91,6 +154,7 @@ A comprehensive web-based chat interface that integrates with AI services throug
 - Use Shift+Enter for multi-line messages
 - Toggle the sidebar using the button on the left
 - Start new conversations with the "New Chat" button
+- Log in to access your chats from any device
 
 ### Settings
 Access settings by clicking the gear icon to:
@@ -98,6 +162,7 @@ Access settings by clicking the gear icon to:
 - Adjust response temperature (creativity)
 - Set typing animation speed
 - Choose between API and random response modes
+- Configure auto-clear and storage limit options
 
 ## Available AI Models
 
@@ -118,21 +183,37 @@ Currently supported models include:
 - **ChatHistoryService**: Manages saving/loading conversations
 - **UIService**: Renders messages and manages the interface
 - **MarkdownService**: Converts markdown to formatted HTML
+- **Flask Backend**: Provides user authentication and database storage
 
 ### Security Considerations
-- The app uses client-side storage for conversations
+- The app uses both client-side storage and server-side database
+- User passwords are hashed using Werkzeug's security functions
+- JWT tokens are used for API authentication
 - API keys should be properly managed using environment variables in production
 - Input sanitization is implemented to prevent XSS attacks
+
+## Deployment
+
+### Frontend
+- Can be deployed to any static web hosting service (Netlify, Vercel, GitHub Pages)
+- Update the `DatabaseUrl.API_URL` in config.js to point to your backend
+
+### Backend
+- Deploy to a server that supports Python (Heroku, DigitalOcean, AWS, etc.)
+- Set up environment variables for production:
+  - `DATABASE_URL`: Connection string for your production database
+  - `SECRET_KEY`: Secure random string for JWT token signing
 
 ## Roadmap
 
 Planned improvements:
-- User authentication
-- Server-side database for chat history
+- Enhanced user authentication with password reset
 - File upload and attachment support
 - Conversation summarization
 - Chat export functionality
 - Extended model selection options
+- User profile management
+- Chat sharing capabilities
 
 ## License
 

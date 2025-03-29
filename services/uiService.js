@@ -49,6 +49,13 @@ export class UIService {
         
         // Store references to current chat state
         this.currentChatId = currentChatId;
+        
+        // Ensure we have a valid messages array
+        if (!currentChatMessages) {
+            currentChatMessages = [];
+            console.warn("currentChatMessages was undefined, creating new array");
+        }
+        
         this.currentChatMessages = currentChatMessages;
         
         // Initial scroll to bottom (might be incomplete with complex content)
@@ -89,7 +96,7 @@ export class UIService {
         }
         
         // Add to current chat messages
-        currentChatMessages.push({
+        this.currentChatMessages.push({
             content: content,
             sender: sender,
             timestamp: Date.now()
@@ -97,15 +104,18 @@ export class UIService {
         
         // Save the updated chat
         if (currentChatId) {
-            const title = this.getChatTitle(currentChatMessages);
-            this.chatHistoryService.saveChat(currentChatId, title, currentChatMessages);
+            const title = this.getChatTitle(this.currentChatMessages);
+            await this.chatHistoryService.saveChat(currentChatId, title, this.currentChatMessages);
         }
+        
+        // Return the current messages array in case the caller needs it
+        return this.currentChatMessages;
     }
 
     /**
      * Clears the current chat messages but keeps the same chat ID
      */
-    clearCurrentChat() {
+    async clearCurrentChat() {
         // Get reference to the chat container
         const chatContainer = document.getElementById('chat-container');
         
@@ -130,21 +140,25 @@ export class UIService {
         
         // Make sure we update the chat in storage
         if (this.currentChatId) {
-            // Get the current chat from storage
-            const chat = this.chatHistoryService.getChat(this.currentChatId);
-            if (chat) {
-                // Keep the existing title
-                const title = chat.title || "Cleared Chat";
-                
-                // Save the cleared state to storage
-                this.chatHistoryService.saveChat(
-                    this.currentChatId, 
-                    title, 
-                    clearedMessages
-                );
-                
-                // Force update the sidebar to reflect changes
-                this.updateChatHistorySidebar(this.currentChatId);
+            try {
+                // Get the current chat from storage
+                const chat = await this.chatHistoryService.getChat(this.currentChatId);
+                if (chat) {
+                    // Keep the existing title
+                    const title = chat.title || "Cleared Chat";
+                    
+                    // Save the cleared state to storage
+                    await this.chatHistoryService.saveChat(
+                        this.currentChatId, 
+                        title, 
+                        clearedMessages
+                    );
+                    
+                    // Force update the sidebar to reflect changes
+                    await this.updateChatHistorySidebar(this.currentChatId);
+                }
+            } catch (error) {
+                console.error("Error clearing chat:", error);
             }
         }
         
@@ -159,54 +173,59 @@ export class UIService {
     /**
      * Loads a chat from history
      * @param {string} chatId - The ID of the chat to load
-     * @returns {Object} - The loaded chat data including messages and updated currentChatId
+     * @returns {Promise<Object>} - The loaded chat data including messages and updated currentChatId
      */
-    loadChat(chatId) {
-        const chat = this.chatHistoryService.getChat(chatId);
-        if (!chat) return null;
-        
-        // Clear the chat container
-        const chatContainer = document.getElementById('chat-container');
-        chatContainer.innerHTML = '';
-        
-        // Add each message to the chat interface
-        chat.messages.forEach(msg => {
-            const messageDiv = document.createElement('div');
-            messageDiv.classList.add('message', msg.sender);
+    async loadChat(chatId) {
+        try {
+            const chat = await this.chatHistoryService.getChat(chatId);
+            if (!chat) return null;
             
-            const contentContainer = document.createElement('div');
-            contentContainer.classList.add('message-content');
+            // Clear the chat container
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.innerHTML = '';
             
-            // Convert bot messages from markdown to HTML
-            if (msg.sender === 'bot') {
-                contentContainer.innerHTML = markdownToHTML(msg.content);
-            } else {
-                contentContainer.textContent = msg.content;
-            }
+            // Add each message to the chat interface
+            chat.messages.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message', msg.sender);
+                
+                const contentContainer = document.createElement('div');
+                contentContainer.classList.add('message-content');
+                
+                // Convert bot messages from markdown to HTML
+                if (msg.sender === 'bot') {
+                    contentContainer.innerHTML = markdownToHTML(msg.content);
+                } else {
+                    contentContainer.textContent = msg.content;
+                }
+                
+                messageDiv.appendChild(contentContainer);
+                chatContainer.appendChild(messageDiv);
+            });
             
-            messageDiv.appendChild(contentContainer);
-            chatContainer.appendChild(messageDiv);
-        });
-        
-        // Attach click event listeners to code copy buttons
-        attachCodeCopyListeners();
-        
-        // Ensure scroll to bottom after everything is loaded
-        setTimeout(() => {
-            this.scrollToBottom(true);
-        }, 100);
-        
-        // Update sidebar to highlight this chat
-        this.updateChatHistorySidebar(chatId);
-        
-        // Update internal state references
-        this.currentChatId = chatId;
-        this.currentChatMessages = chat.messages;
-        
-        return {
-            currentChatId: chatId,
-            currentChatMessages: chat.messages
-        };
+            // Attach click event listeners to code copy buttons
+            attachCodeCopyListeners();
+            
+            // Ensure scroll to bottom after everything is loaded
+            setTimeout(() => {
+                this.scrollToBottom(true);
+            }, 100);
+            
+            // Update sidebar to highlight this chat
+            await this.updateChatHistorySidebar(chatId);
+            
+            // Update internal state references
+            this.currentChatId = chatId;
+            this.currentChatMessages = chat.messages;
+            
+            return {
+                currentChatId: chatId,
+                currentChatMessages: chat.messages
+            };
+        } catch (error) {
+            console.error("Error loading chat:", error);
+            return null;
+        }
     }
 
     /**
@@ -233,9 +252,9 @@ export class UIService {
 
     /**
      * Sets up a new chat interface
-     * @returns {Object} - The new chat data including ID and initial messages
+     * @returns {Promise<Object>} - The new chat data including ID and initial messages
      */
-    startNewChat() {
+    async startNewChat() {
         // Clear the chat interface
         document.getElementById('chat-container').innerHTML = `
             <div class="message bot">
@@ -243,108 +262,135 @@ export class UIService {
             </div>
         `;
         
-        // Generate new chat data
-        const chatId = this.chatHistoryService.generateChatId();
-        const chatMessages = [
-            {
-                content: "Hello! How can I help you today?",
-                sender: "bot",
-                timestamp: Date.now()
-            }
-        ];
-        
-        // Update internal state references
-        this.currentChatId = chatId;
-        this.currentChatMessages = chatMessages;
-        
-        // Save the new chat
-        this.chatHistoryService.saveChat(chatId, "New Chat", chatMessages);
-        
-        // Update the sidebar
-        this.updateChatHistorySidebar(chatId);
-        
-        return {
-            currentChatId: chatId,
-            currentChatMessages: chatMessages
-        };
+        try {
+            // Generate new chat data
+            const chatId = await this.chatHistoryService.generateChatId();
+            const chatMessages = [
+                {
+                    content: "Hello! How can I help you today?",
+                    sender: "bot",
+                    timestamp: Date.now()
+                }
+            ];
+            
+            // Update internal state references
+            this.currentChatId = chatId;
+            this.currentChatMessages = chatMessages;
+            
+            // Save the new chat
+            await this.chatHistoryService.saveChat(chatId, "New Chat", chatMessages);
+            
+            // Update the sidebar
+            await this.updateChatHistorySidebar(chatId);
+            
+            return {
+                currentChatId: chatId,
+                currentChatMessages: chatMessages
+            };
+        } catch (error) {
+            console.error("Error starting new chat:", error);
+            // Use a fallback local ID in case of error
+            const fallbackId = 'local_' + Date.now() + '_' + Math.random().toString(36).substring(2);
+            return {
+                currentChatId: fallbackId,
+                currentChatMessages: [{
+                    content: "Hello! How can I help you today?",
+                    sender: "bot",
+                    timestamp: Date.now()
+                }]
+            };
+        }
     }
 
     /**
      * Updates the chat history sidebar
      * @param {string} currentChatId - The ID of the current active chat
      */
-    updateChatHistorySidebar(currentChatId) {
+    async updateChatHistorySidebar(currentChatId) {
         const historyList = document.getElementById('chat-history-list');
         historyList.innerHTML = '';
         
-        const chats = this.chatHistoryService.getAllChatsSorted();
-        
-        if (chats.length === 0) {
-            const emptyItem = document.createElement('li');
-            emptyItem.textContent = "No chat history";
-            emptyItem.classList.add('empty-history');
-            historyList.appendChild(emptyItem);
-            return;
-        }
-        
-        chats.forEach(chat => {
-            const listItem = document.createElement('li');
-            listItem.textContent = chat.title;
-            listItem.setAttribute('data-chat-id', chat.id);
+        try {
+            const chats = await this.chatHistoryService.getAllChatsSorted();
             
-            // Create delete button
-            const deleteBtn = document.createElement('button');
-            deleteBtn.classList.add('chat-delete-btn');
-            deleteBtn.innerHTML = '×'; // × symbol for delete
-            deleteBtn.setAttribute('aria-label', 'Delete chat');
-            
-            // Add event listener to delete button
-            deleteBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent the click from bubbling up to the list item
-                this.deleteChat(chat.id, currentChatId);
-            });
-            
-            // Append delete button to list item
-            listItem.appendChild(deleteBtn);
-            
-            // Highlight the current chat
-            if (chat.id === currentChatId) {
-                listItem.classList.add('active-chat');
+            if (chats.length === 0) {
+                const emptyItem = document.createElement('li');
+                emptyItem.textContent = "No chat history";
+                emptyItem.classList.add('empty-history');
+                historyList.appendChild(emptyItem);
+                return;
             }
             
-            listItem.addEventListener('click', () => {
-                // We'll implement this in the main script to avoid circular references
-                document.dispatchEvent(new CustomEvent('loadChat', { detail: chat.id }));
+            chats.forEach(chat => {
+                const listItem = document.createElement('li');
+                listItem.textContent = chat.title;
+                listItem.setAttribute('data-chat-id', chat.id);
+                
+                // Create delete button
+                const deleteBtn = document.createElement('button');
+                deleteBtn.classList.add('chat-delete-btn');
+                deleteBtn.innerHTML = '×'; // × symbol for delete
+                deleteBtn.setAttribute('aria-label', 'Delete chat');
+                
+                // Add event listener to delete button
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent the click from bubbling up to the list item
+                    this.deleteChat(chat.id, currentChatId);
+                });
+                
+                // Append delete button to list item
+                listItem.appendChild(deleteBtn);
+                
+                // Highlight the current chat
+                if (chat.id === currentChatId) {
+                    listItem.classList.add('active-chat');
+                }
+                
+                listItem.addEventListener('click', () => {
+                    // We'll implement this in the main script to avoid circular references
+                    document.dispatchEvent(new CustomEvent('loadChat', { detail: chat.id }));
+                });
+                
+                historyList.appendChild(listItem);
             });
-            
-            historyList.appendChild(listItem);
-        });
+        } catch (error) {
+            console.error("Error updating chat history sidebar:", error);
+            const emptyItem = document.createElement('li');
+            emptyItem.textContent = "Error loading chat history";
+            emptyItem.classList.add('empty-history', 'error');
+            historyList.appendChild(emptyItem);
+        }
     }
 
     /**
      * Deletes a chat from history
      * @param {string} chatId - The ID of the chat to delete
      * @param {string} currentChatId - The current active chat ID
-     * @returns {boolean} - Whether a new chat needs to be started
+     * @returns {Promise<boolean>} - Whether a new chat needs to be started
      */
-    deleteChat(chatId, currentChatId) {
-        // Delete the chat from storage
-        this.chatHistoryService.deleteChat(chatId);
-        
-        // If the deleted chat was the current chat, start a new one
-        const needNewChat = chatId === currentChatId;
-        
-        // Update the sidebar
-        this.updateChatHistorySidebar(currentChatId);
-        
-        return needNewChat;
+    async deleteChat(chatId, currentChatId) {
+        try {
+            // Delete the chat from storage
+            await this.chatHistoryService.deleteChat(chatId);
+            
+            // If the deleted chat was the current chat, start a new one
+            const needNewChat = chatId === currentChatId;
+            
+            // Update the sidebar
+            await this.updateChatHistorySidebar(currentChatId);
+            
+            return needNewChat;
+        } catch (error) {
+            console.error("Error deleting chat:", error);
+            return false;
+        }
     }
 
     /**
      * Initializes the sidebar
      * @param {string} currentChatId - The current active chat ID
      */
-    initSidebar(currentChatId) {
+    async initSidebar(currentChatId) {
         const sidebarToggle = document.getElementById('sidebar-toggle');
         const sidebar = document.getElementById('sidebar');
         const chatWrapper = document.getElementById('chat-wrapper');
@@ -372,6 +418,6 @@ export class UIService {
         });
         
         // Initialize chat history in sidebar
-        this.updateChatHistorySidebar(currentChatId);
+        await this.updateChatHistorySidebar(currentChatId);
     }
 }

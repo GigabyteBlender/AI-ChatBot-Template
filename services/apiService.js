@@ -151,8 +151,15 @@ export class ApiService {
             }
             
             // If we can't determine the format, log the issue and return an error message
-            console.error('Unexpected API response format:', data);
-            throw new Error('Could not parse API response');
+            // In the getCompletion method of apiService.js
+            if (!response.ok) {
+                const errorData = await response.json();
+                if (errorData && errorData.error) {
+                    throw new Error(`API error: ${errorData.error.message || 'Unknown error'}`);
+                }
+                throw new Error(`API request failed with status ${response.status}`);
+            }
+            
         } catch (error) {
             if (error.name === 'AbortError') {
                 console.log('Request was aborted');

@@ -42,7 +42,10 @@ class ChatApp {
         this.uiService.initSidebar(this.currentChatId);
         
         // Load initial chat
-        this.loadInitialChat();
+        this.loadInitialChat().catch(err => {
+            console.error("Failed to load initial chat:", err);
+            this.startNewChat();
+        });
     }
     
     /**
@@ -118,13 +121,19 @@ class ChatApp {
     /**
      * Loads the initial chat from history or starts a new one
      */
-    loadInitialChat() {
-        const chatHistory = this.chatHistoryService.getAllChatsSorted();
-        if (chatHistory.length > 0) {
-            // Load the most recent chat
-            this.loadChat(chatHistory[0].id);
-        } else {
-            // Start a new chat
+    async loadInitialChat() {
+        try {
+            const chatHistory = await this.chatHistoryService.getAllChatsSorted();
+            if (chatHistory && chatHistory.length > 0) {
+                // Load the most recent chat
+                this.loadChat(chatHistory[0].id);
+            } else {
+                // Start a new chat
+                this.startNewChat();
+            }
+        } catch (error) {
+            console.error("Error loading initial chat:", error);
+            // Start a new chat as fallback
             this.startNewChat();
         }
     }
@@ -210,7 +219,7 @@ class ChatApp {
     createContextForRequest(userMessage) {
         // Create a simplified context for the API
         // Could include recent message history for better continuity
-        const recentMessages = this.currentChatMessages
+        const recentMessages = (this.currentChatMessages || [])
             .slice(-5) // Last 5 messages for context
             .map(msg => ({
                 role: msg.sender === 'user' ? 'user' : 'assistant',
@@ -258,16 +267,21 @@ class ChatApp {
      * Loads a chat from history
      * @param {string} chatId - The ID of the chat to load
      */
-    loadChat(chatId) {
+    async loadChat(chatId) {
         if (this.isProcessing) {
             this.showStatusMessage('Please wait until current processing is complete');
             return;
         }
         
-        const chatData = this.uiService.loadChat(chatId);
-        if (chatData) {
-            this.currentChatId = chatData.currentChatId;
-            this.currentChatMessages = chatData.currentChatMessages;
+        try {
+            const chatData = await this.uiService.loadChat(chatId);
+            if (chatData) {
+                this.currentChatId = chatData.currentChatId;
+                this.currentChatMessages = chatData.currentChatMessages;
+            }
+        } catch (error) {
+            console.error("Error loading chat:", error);
+            this.showStatusMessage('Failed to load chat');
         }
     }
     
