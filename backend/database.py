@@ -335,7 +335,8 @@ def login():
 
 @app.route('/api/user', methods=['GET'])
 @token_required
-def get_user_info(user_id):
+def get_user_info(**kwargs):
+    user_id = kwargs['user_id']  # Retrieve user_id from kwargs
     user = User.query.get(user_id)
     
     if not user:
@@ -349,7 +350,8 @@ def get_user_info(user_id):
 
 @app.route('/api/settings', methods=['GET'])
 @token_required
-def get_settings(user_id):
+def get_settings(**kwargs):
+    user_id = kwargs['user_id']  # Retrieve user_id from kwargs
     settings = {}
     for setting in Setting.query.filter_by(user_id=user_id).all():
         settings[setting.key] = setting.value
@@ -358,7 +360,8 @@ def get_settings(user_id):
 
 @app.route('/api/settings', methods=['POST'])
 @token_required
-def update_settings(user_id):
+def update_settings(**kwargs):
+    user_id = kwargs['user_id']
     data = request.get_json()
     
     if not data:
@@ -384,7 +387,9 @@ def update_settings(user_id):
 
 @app.route('/api/chats', methods=['GET'])
 @token_required
-def get_all_chats(user_id):
+def get_all_chats(**kwargs):
+    user_id = kwargs['user_id']  # Retrieve user_id from kwargs
+    # Fetch all chats for the user
     chats = Chat.query.filter_by(user_id=user_id).all()
     
     # Convert to the format expected by the frontend
@@ -401,7 +406,10 @@ def get_all_chats(user_id):
 
 @app.route('/api/chats/sorted', methods=['GET'])
 @token_required
-def get_all_chats_sorted(user_id):
+def get_all_chats_sorted(**kwargs):
+    user_id = kwargs['user_id']  # Retrieve user_id from kwargs
+    # Fetch all chats for the user, sorted by timestamp (newest first)
+    
     chats = Chat.query.filter_by(user_id=user_id).order_by(Chat.timestamp.desc()).all()
     
     result = []
@@ -427,13 +435,13 @@ def get_all_chats_sorted(user_id):
 
 @app.route('/api/chats/<chat_id>', methods=['GET'])
 @token_required
-def get_chat(user_id, chat_id):
+def get_chat(chat_id, **kwargs):
+    user_id = kwargs['user_id']
     chat = Chat.query.filter_by(id=chat_id, user_id=user_id).first()
-    
     if not chat:
         logger.warning(f"Chat not found: {chat_id} for user ID: {user_id}")
         return jsonify({'error': 'Not Found', 'message': 'Chat not found', 'status': 404}), 404
-    
+
     # Fetch messages for this chat
     messages = []
     for msg in chat.messages:
@@ -442,7 +450,7 @@ def get_chat(user_id, chat_id):
             'content': msg.content,
             'timestamp': msg.timestamp
         })
-        
+
     result = {
         'id': chat.id,
         'title': chat.title,
@@ -450,32 +458,30 @@ def get_chat(user_id, chat_id):
         'preview': chat.preview,
         'messages': messages
     }
-    
+
     return jsonify(result), 200
 
 @app.route('/api/chats', methods=['POST'])
 @token_required
-def save_chat(user_id):
+def save_chat(**kwargs):
+    user_id = kwargs['user_id']
     data = request.get_json()
-    
     if not data:
         return jsonify({'error': 'Bad Request', 'message': 'No data provided', 'status': 400}), 400
-        
+
     missing_fields = []
     for field in ['id', 'title']:
         if not data.get(field):
             missing_fields.append(field)
-    
-    if 'messages' not in data:
-        missing_fields.append('messages')
-    
-    if missing_fields:
-        return jsonify({'error': 'Bad Request', 'message': f'Missing required fields: {", ".join(missing_fields)}', 'status': 400}), 400
-    
+        if 'messages' not in data:
+            missing_fields.append('messages')
+        if missing_fields:
+            return jsonify({'error': 'Bad Request', 'message': f'Missing required fields: {", ".join(missing_fields)}', 'status': 400}), 400
+
     try:
         # Check if chat exists
         chat = Chat.query.filter_by(id=data['id'], user_id=user_id).first()
-        
+
         # Generate preview from messages
         preview = "New chat"
         if data['messages']:
@@ -484,9 +490,9 @@ def save_chat(user_id):
                     content = msg.get('content', '')
                     preview = content[:27] + '...' if len(content) > 30 else content
                     break
-        
+
         current_time = int(datetime.datetime.now().timestamp() * 1000)
-        
+
         if not chat:
             # Create new chat
             chat = Chat(
@@ -503,11 +509,11 @@ def save_chat(user_id):
             chat.title = data['title']
             chat.timestamp = current_time
             chat.preview = preview
-            
+
             # Remove old messages
             Message.query.filter_by(chat_id=chat.id).delete()
             logger.info(f"Updating existing chat: {data['id']} for user ID: {user_id}")
-        
+
         # Add messages
         for msg in data['messages']:
             message = Message(
@@ -517,17 +523,18 @@ def save_chat(user_id):
                 timestamp=msg.get('timestamp', current_time)
             )
             db.session.add(message)
-        
+
         db.session.commit()
-        
+
         # Apply storage limit if necessary
         apply_storage_limit(user_id)
-        
-        # Return the saved chat
-        return get_chat(user_id, chat.id)
+
+        # Return the chat
+        return get_chat(chat_id=chat.id, **kwargs)
+
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error saving chat for user ID {user_id}: {str(e)}\n{traceback.format_exc()}")
+        logger.error(f"Error saving chat for user ID {user_id}: {str(e)}")
         return jsonify({'error': 'Internal Server Error', 'message': str(e) if app.config['DEBUG'] else 'Failed to save chat', 'status': 500}), 500
 
 @app.route('/api/chats/<chat_id>', methods=['DELETE'])

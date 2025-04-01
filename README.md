@@ -241,6 +241,10 @@ Currently supported models include:
 
 ## Roadmap
 
+Currently working on: 
+- *URGENT* saving chats is inteffering with the api call chats (fixing in progress)
+- bug when loading and creating chats. multiple appear in side bar (fixing later)
+
 Planned improvements:
 - Enhanced user authentication with password reset
 - File upload and attachment support
