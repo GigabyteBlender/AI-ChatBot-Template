@@ -6,7 +6,7 @@ This project is a modern web-based chat interface that integrates with AI servic
 
 # AI Chatbot Interface
 
-![Chat Interface Example](assets/example.jpg)
+![Chat Interface Example](img/example.jpg)
 
 ## Overview
 
