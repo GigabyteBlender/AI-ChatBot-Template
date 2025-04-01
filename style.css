@@ -8,14 +8,15 @@ body, h1, h2, h3, h4, p, ul, ol, li, figure, figcaption, blockquote, dl, dd {
 
 /* Responsive variables */
 :root {
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
+  --primary-color: #20b8cd;
+  --primary-hover: #24cee4;
   --text-color: #333333;
-  --dark-bg: #1a1a1a;
+  --sidebar-color: #202222;
+  --dark-bg: #191a1a;
   --light-text: #f0f0f0;
-  --user-msg-bg: #1d4ed8;
-  --user-msg-dark-bg: #1d4ed8;
-  --highlight-color: #007bff;
+  --user-msg-bg: #464646;
+  --user-msg-dark-bg: #464646;
+  --highlight-color: #24cee4;
   --card-bg: #3c3c3c;
   --secondary-color: #6c757d;
   --danger-color: #dc3545;
@@ -79,7 +80,7 @@ body.settings-open {
 #sidebar-toggle {
   width: 40px;
   height: 40px;
-  background-color: var(--primary-color);
+  background-color: #20808D;
   border: none;
   border-radius: 50%;
   position: fixed;
@@ -104,7 +105,7 @@ body.sidebar-hidden #sidebar-toggle {
 }
 
 body:not(.sidebar-hidden) #sidebar-toggle {
-  background-color: #d32f2f;
+  background-color: #20808D;
   left: calc(var(--sidebar-width) + 10px);
 }
 
@@ -114,7 +115,7 @@ body:not(.sidebar-hidden) #sidebar-toggle {
   top: 0;
   width: var(--sidebar-width);
   height: 100vh;
-  background-color: var(--dark-bg);
+  background-color: var(--sidebar-color);
   box-shadow: 2px 0 10px rgba(0,0,0,0.4);
   transition: var(--standard-transition);
   display: flex;
