@@ -29,6 +29,7 @@ class ChatApp {
         this.submitBtn = document.getElementById('submitBtn');
         this.modeSelect = document.getElementById('mode');
         this.settingsBtn = document.getElementById('settingsBtn');
+        this.authBtn = document.getElementById('auth-button');
         this.clearBtn = document.getElementById('clearBtn');
         this.newChatBtn = document.querySelector('.new-chat');
         
@@ -81,6 +82,10 @@ class ChatApp {
         // Settings button
         this.settingsBtn.addEventListener('click', () => {
             window.location.href = 'settings.html';
+        });
+
+        this.authBtn.addEventListener('click', () => {
+            window.location.href = 'auth.html';
         });
         
         // Mode selection

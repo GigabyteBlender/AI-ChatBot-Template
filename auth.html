@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login / Register - AI Chatbot</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="assets/icon.png" sizes="32x32" />
+    <meta name="description" content="Login or register for AI Chat Assistant">
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-header">
+            <h1>AI Chatbot</h1>
+            <div class="auth-tabs">
+                <button id="login-tab" class="auth-tab active">Login</button>
+                <button id="register-tab" class="auth-tab">Register</button>
+            </div>
+        </div>
+        
+        <div id="login-form" class="auth-form active">
+            <div class="form-group">
+                <label for="login-email">Email</label>
+                <input type="email" id="login-email" required>
+            </div>
+            <div class="form-group">
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" required>
+            </div>
+            <div class="form-actions">
+                <button id="login-button" class="auth-submit">Login</button>
+                <a href="#" id="forgot-password">Forgot password?</a>
+            </div>
+            <div id="login-message" class="auth-message"></div>
+        </div>
+        
+        <div id="register-form" class="auth-form">
+            <div class="form-group">
+                <label for="register-username">Username</label>
+                <input type="text" id="register-username" required>
+            </div>
+            <div class="form-group">
+                <label for="register-email">Email</label>
+                <input type="email" id="register-email" required>
+            </div>
+            <div class="form-group">
+                <label for="register-password">Password</label>
+                <input type="password" id="register-password" required>
+                <p class="password-hint">Password must be at least 8 characters long</p>
+            </div>
+            <div class="form-group">
+                <label for="register-confirm">Confirm Password</label>
+                <input type="password" id="register-confirm" required>
+            </div>
+            <div class="form-actions">
+                <button id="register-button" class="auth-submit">Register</button>
+            </div>
+            <div id="register-message" class="auth-message"></div>
+        </div>
+        
+        <div id="reset-form" class="auth-form">
+            <h2>Reset Password</h2>
+            <div class="form-group">
+                <label for="reset-email">Email</label>
+                <input type="email" id="reset-email" required>
+            </div>
+            <div class="form-actions">
+                <button id="reset-button" class="auth-submit">Send Reset Link</button>
+                <button id="back-to-login" class="auth-secondary">Back to Login</button>
+            </div>
+            <div id="reset-message" class="auth-message"></div>
+        </div>
+        
+        <div class="auth-footer">
+            <a href="index.html">Back to Chat</a>
+        </div>
+    </div>
+    
+    <script type="module" src="auth.js"></script>
+</body>
+</html>

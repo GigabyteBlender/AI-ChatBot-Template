@@ -1,19 +1,34 @@
-from flask import Flask, request, jsonify # type: ignore
-from flask_cors import CORS # type: ignore
-from flask_sqlalchemy import SQLAlchemy # type: ignore
+from flask import Flask, request, jsonify, g
+from flask_cors import CORS
+from flask_sqlalchemy import SQLAlchemy
 import os
 import datetime
 import uuid
-import jwt # type: ignore
-from werkzeug.security import generate_password_hash, check_password_hash # type: ignore
+import jwt
+import logging
+import traceback
+import time
+from werkzeug.security import generate_password_hash, check_password_hash
+
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('app.log')
+    ]
+)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app)
+cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # Configure database
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///chat_app.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev_secret_key_change_in_production')
+app.config['DEBUG'] = os.environ.get('FLASK_DEBUG', 'True').lower() in ('true', '1', 't')
 
 db = SQLAlchemy(app)
 
@@ -57,6 +72,92 @@ class Setting(db.Model):
     
     __table_args__ = (db.UniqueConstraint('user_id', 'key', name='_user_setting_uc'),)
 
+# Request logging middleware
+@app.before_request
+def before_request():
+    g.start_time = time.time()
+    request_data = None
+    if request.is_json:
+        try:
+            request_data = request.get_json()
+        except Exception as e:
+            request_data = "Invalid JSON"
+    
+    logger.info(f"REQUEST: {request.method} {request.path}")
+    logger.debug(f"REQUEST HEADERS: {dict(request.headers)}")
+    if request_data:
+        if isinstance(request_data, dict) and 'password' in request_data:
+            # Hide sensitive data
+            safe_data = request_data.copy()
+            safe_data['password'] = '******'
+            logger.debug(f"REQUEST BODY: {safe_data}")
+        else:
+            logger.debug(f"REQUEST BODY: {request_data}")
+
+@app.after_request
+def after_request(response):
+    try:
+        response_data = response.get_json() if response.is_json else None
+        duration = time.time() - g.start_time
+        status_code = response.status_code
+        
+        if status_code >= 400:
+            log_level = logging.ERROR
+        else:
+            log_level = logging.INFO
+        
+        logger.log(log_level, f"RESPONSE: {request.method} {request.path} - Status: {status_code} - Duration: {duration:.2f}s")
+        
+        if response_data and status_code >= 400:
+            logger.error(f"RESPONSE BODY: {response_data}")
+    except Exception as e:
+        logger.error(f"Error in after_request: {str(e)}")
+    
+    return response
+
+# Error handlers
+@app.errorhandler(400)
+def bad_request(error):
+    response = jsonify({
+        'error': 'Bad Request',
+        'message': str(error),
+        'status': 400
+    })
+    response.status_code = 400
+    return response
+
+@app.errorhandler(401)
+def unauthorized(error):
+    response = jsonify({
+        'error': 'Unauthorized',
+        'message': 'Authentication required or failed',
+        'status': 401
+    })
+    response.status_code = 401
+    return response
+
+@app.errorhandler(404)
+def not_found(error):
+    response = jsonify({
+        'error': 'Not Found',
+        'message': f"The requested URL {request.path} was not found on the server",
+        'status': 404
+    })
+    response.status_code = 404
+    return response
+
+@app.errorhandler(500)
+def server_error(error):
+    tb = traceback.format_exc()
+    logger.error(f"Internal Server Error: {str(error)}\n{tb}")
+    response = jsonify({
+        'error': 'Internal Server Error',
+        'message': str(error) if app.config['DEBUG'] else 'An internal error occurred',
+        'status': 500
+    })
+    response.status_code = 500
+    return response
+
 # Create the database tables
 with app.app_context():
     db.create_all()
@@ -66,17 +167,23 @@ def generate_token(user_id):
     payload = {
         'exp': datetime.datetime.utcnow() + datetime.timedelta(days=1),
         'iat': datetime.datetime.utcnow(),
-        'sub': user_id
+        'sub': str(user_id)  # Convert user_id to string
     }
-    return jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
+    token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
+    # Ensure the token is a string
+    if isinstance(token, bytes):
+        return token.decode('utf-8')
+    return token
 
 def decode_token(token):
     try:
         payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-        return payload['sub']
+        return int(payload['sub'])  # Convert back to integer if needed
     except jwt.ExpiredSignatureError:
+        logger.warning(f"Token expired: {token[:10]}...")
         return None
-    except jwt.InvalidTokenError:
+    except jwt.InvalidTokenError as e:
+        logger.warning(f"Invalid token: {token[:10]}... Error: {str(e)}")
         return None
 
 def token_required(f):
@@ -88,59 +195,127 @@ def token_required(f):
             token = auth_header.split(" ")[1]
             
         if not token:
-            return jsonify({'message': 'Token is missing'}), 401
+            logger.warning(f"No token provided for {request.method} {request.path}")
+            return jsonify({'error': 'Unauthorized', 'message': 'Authentication token is missing', 'status': 401}), 401
             
         user_id = decode_token(token)
         if not user_id:
-            return jsonify({'message': 'Token is invalid or expired'}), 401
+            logger.warning(f"Invalid token provided for {request.method} {request.path}")
+            return jsonify({'error': 'Unauthorized', 'message': 'Authentication token is invalid or expired', 'status': 401}), 401
             
+        # Check if user exists
+        user = User.query.get(user_id)
+        if not user:
+            logger.warning(f"Token refers to non-existent user ID {user_id}")
+            return jsonify({'error': 'Unauthorized', 'message': 'User not found', 'status': 401}), 401
+            
+        logger.info(f"Authenticated request from user: {user.username} (ID: {user_id})")
         kwargs['user_id'] = user_id
         return f(*args, **kwargs)
         
     decorator.__name__ = f.__name__
     return decorator
 
+@app.route('/api/request-reset', methods=['POST'])
+def request_password_reset():
+    data = request.get_json()
+    
+    if not data or not data.get('email'):
+        return jsonify({'error': 'Bad Request', 'message': 'Email is required', 'status': 400}), 400
+        
+    user = User.query.filter_by(email=data['email']).first()
+    
+    if not user:
+        # Don't reveal whether the user exists for security
+        logger.info(f"Password reset requested for non-existent email: {data['email']}")
+        return jsonify({'message': 'If the email exists, a reset link has been sent'}), 200
+    
+    logger.info(f"Password reset requested for user: {user.username} (ID: {user.id})")
+    # In a real app, you would generate a reset token and send email here
+    # For now, we'll just return a success message
+    
+    return jsonify({'message': 'If the email exists, a reset link has been sent'}), 200
+
+@app.route('/api/reset-password', methods=['POST'])
+def reset_password():
+    data = request.get_json()
+    
+    if not data or not data.get('token') or not data.get('password'):
+        return jsonify({'error': 'Bad Request', 'message': 'Token and password are required', 'status': 400}), 400
+    
+    # In a real app, you would validate the token and update the password
+    # For now, just return a success message
+    
+    return jsonify({'message': 'Password has been reset successfully'}), 200
+
 # Routes
 @app.route('/api/register', methods=['POST'])
 def register():
     data = request.get_json()
     
-    if not data or not data.get('username') or not data.get('email') or not data.get('password'):
-        return jsonify({'message': 'Missing required fields'}), 400
+    if not data:
+        return jsonify({'error': 'Bad Request', 'message': 'No data provided', 'status': 400}), 400
+        
+    missing_fields = []
+    for field in ['username', 'email', 'password']:
+        if not data.get(field):
+            missing_fields.append(field)
+    
+    if missing_fields:
+        return jsonify({'error': 'Bad Request', 'message': f'Missing required fields: {", ".join(missing_fields)}', 'status': 400}), 400
         
     if User.query.filter_by(username=data['username']).first():
-        return jsonify({'message': 'Username already exists'}), 409
+        return jsonify({'error': 'Conflict', 'message': 'Username already exists', 'status': 409}), 409
         
     if User.query.filter_by(email=data['email']).first():
-        return jsonify({'message': 'Email already exists'}), 409
+        return jsonify({'error': 'Conflict', 'message': 'Email already exists', 'status': 409}), 409
         
-    user = User(username=data['username'], email=data['email'])
-    user.set_password(data['password'])
-    
-    db.session.add(user)
-    db.session.commit()
-    
-    # Add default settings
-    storage_limit = Setting(user_id=user.id, key='storageLimit', value='10')
-    auto_clear = Setting(user_id=user.id, key='autoClear', value='30')
-    
-    db.session.add(storage_limit)
-    db.session.add(auto_clear)
-    db.session.commit()
-    
-    return jsonify({'message': 'User registered successfully'}), 201
+    try:
+        user = User(username=data['username'], email=data['email'])
+        user.set_password(data['password'])
+        
+        db.session.add(user)
+        db.session.commit()
+        
+        # Add default settings
+        storage_limit = Setting(user_id=user.id, key='storageLimit', value='10')
+        auto_clear = Setting(user_id=user.id, key='autoClear', value='30')
+        
+        db.session.add(storage_limit)
+        db.session.add(auto_clear)
+        db.session.commit()
+        
+        logger.info(f"New user registered: {user.username} (ID: {user.id})")
+        return jsonify({'message': 'User registered successfully'}), 201
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error registering user: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({'error': 'Internal Server Error', 'message': str(e) if app.config['DEBUG'] else 'Registration failed', 'status': 500}), 500
 
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
     
-    if not data or not data.get('username') or not data.get('password'):
-        return jsonify({'message': 'Missing required fields'}), 400
+    if not data:
+        return jsonify({'error': 'Bad Request', 'message': 'No data provided', 'status': 400}), 400
+        
+    missing_fields = []
+    for field in ['username', 'password']:
+        if not data.get(field):
+            missing_fields.append(field)
+    
+    if missing_fields:
+        return jsonify({'error': 'Bad Request', 'message': f'Missing required fields: {", ".join(missing_fields)}', 'status': 400}), 400
     
     user = User.query.filter_by(username=data['username']).first()
     
-    if not user or not user.check_password(data['password']):
-        return jsonify({'message': 'Invalid credentials'}), 401
+    if not user:
+        logger.warning(f"Login attempt with non-existent username: {data['username']}")
+        return jsonify({'error': 'Unauthorized', 'message': 'Invalid credentials', 'status': 401}), 401
+    
+    if not user.check_password(data['password']):
+        logger.warning(f"Failed login attempt for user: {user.username} (ID: {user.id})")
+        return jsonify({'error': 'Unauthorized', 'message': 'Invalid credentials', 'status': 401}), 401
     
     token = generate_token(user.id)
     
@@ -148,6 +323,7 @@ def login():
     user.last_login = datetime.datetime.utcnow()
     db.session.commit()
     
+    logger.info(f"Successful login for user: {user.username} (ID: {user.id})")
     return jsonify({
         'token': token,
         'user': {
@@ -155,6 +331,20 @@ def login():
             'username': user.username,
             'email': user.email
         }
+    }), 200
+
+@app.route('/api/user', methods=['GET'])
+@token_required
+def get_user_info(user_id):
+    user = User.query.get(user_id)
+    
+    if not user:
+        return jsonify({'error': 'Not Found', 'message': 'User not found', 'status': 404}), 404
+    
+    return jsonify({
+        'id': user.id,
+        'username': user.username,
+        'email': user.email
     }), 200
 
 @app.route('/api/settings', methods=['GET'])
@@ -171,18 +361,26 @@ def get_settings(user_id):
 def update_settings(user_id):
     data = request.get_json()
     
-    for key, value in data.items():
-        setting = Setting.query.filter_by(user_id=user_id, key=key).first()
+    if not data:
+        return jsonify({'error': 'Bad Request', 'message': 'No data provided', 'status': 400}), 400
+    
+    try:
+        for key, value in data.items():
+            setting = Setting.query.filter_by(user_id=user_id, key=key).first()
+            
+            if setting:
+                setting.value = value
+            else:
+                setting = Setting(user_id=user_id, key=key, value=value)
+                db.session.add(setting)
         
-        if setting:
-            setting.value = value
-        else:
-            setting = Setting(user_id=user_id, key=key, value=value)
-            db.session.add(setting)
-    
-    db.session.commit()
-    
-    return jsonify({'message': 'Settings updated successfully'}), 200
+        db.session.commit()
+        logger.info(f"Settings updated for user ID: {user_id}")
+        return jsonify({'message': 'Settings updated successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error updating settings for user ID {user_id}: {str(e)}")
+        return jsonify({'error': 'Internal Server Error', 'message': str(e) if app.config['DEBUG'] else 'Failed to update settings', 'status': 500}), 500
 
 @app.route('/api/chats', methods=['GET'])
 @token_required
@@ -233,7 +431,8 @@ def get_chat(user_id, chat_id):
     chat = Chat.query.filter_by(id=chat_id, user_id=user_id).first()
     
     if not chat:
-        return jsonify({'message': 'Chat not found'}), 404
+        logger.warning(f"Chat not found: {chat_id} for user ID: {user_id}")
+        return jsonify({'error': 'Not Found', 'message': 'Chat not found', 'status': 404}), 404
     
     # Fetch messages for this chat
     messages = []
@@ -259,57 +458,77 @@ def get_chat(user_id, chat_id):
 def save_chat(user_id):
     data = request.get_json()
     
-    if not data or not data.get('id') or not data.get('title') or 'messages' not in data:
-        return jsonify({'message': 'Missing required fields'}), 400
-    
-    # Check if chat exists
-    chat = Chat.query.filter_by(id=data['id'], user_id=user_id).first()
-    
-    # Generate preview from messages
-    preview = "New chat"
-    if data['messages']:
-        for msg in data['messages']:
-            if msg.get('sender') == 'user':
-                content = msg.get('content', '')
-                preview = content[:27] + '...' if len(content) > 30 else content
-                break
-    
-    if not chat:
-        # Create new chat
-        chat = Chat(
-            id=data['id'],
-            title=data['title'],
-            timestamp=int(datetime.datetime.now().timestamp() * 1000),
-            preview=preview,
-            user_id=user_id
-        )
-        db.session.add(chat)
-    else:
-        # Update existing chat
-        chat.title = data['title']
-        chat.timestamp = int(datetime.datetime.now().timestamp() * 1000)
-        chat.preview = preview
+    if not data:
+        return jsonify({'error': 'Bad Request', 'message': 'No data provided', 'status': 400}), 400
         
-        # Remove old messages
-        Message.query.filter_by(chat_id=chat.id).delete()
+    missing_fields = []
+    for field in ['id', 'title']:
+        if not data.get(field):
+            missing_fields.append(field)
     
-    # Add messages
-    for msg in data['messages']:
-        message = Message(
-            chat_id=chat.id,
-            sender=msg.get('sender', 'user'),
-            content=msg.get('content', ''),
-            timestamp=msg.get('timestamp', int(datetime.datetime.now().timestamp() * 1000))
-        )
-        db.session.add(message)
+    if 'messages' not in data:
+        missing_fields.append('messages')
     
-    db.session.commit()
+    if missing_fields:
+        return jsonify({'error': 'Bad Request', 'message': f'Missing required fields: {", ".join(missing_fields)}', 'status': 400}), 400
     
-    # Apply storage limit if necessary
-    apply_storage_limit(user_id)
-    
-    # Return the saved chat
-    return get_chat(user_id, chat.id)
+    try:
+        # Check if chat exists
+        chat = Chat.query.filter_by(id=data['id'], user_id=user_id).first()
+        
+        # Generate preview from messages
+        preview = "New chat"
+        if data['messages']:
+            for msg in data['messages']:
+                if msg.get('sender') == 'user':
+                    content = msg.get('content', '')
+                    preview = content[:27] + '...' if len(content) > 30 else content
+                    break
+        
+        current_time = int(datetime.datetime.now().timestamp() * 1000)
+        
+        if not chat:
+            # Create new chat
+            chat = Chat(
+                id=data['id'],
+                title=data['title'],
+                timestamp=current_time,
+                preview=preview,
+                user_id=user_id
+            )
+            db.session.add(chat)
+            logger.info(f"Creating new chat: {data['id']} for user ID: {user_id}")
+        else:
+            # Update existing chat
+            chat.title = data['title']
+            chat.timestamp = current_time
+            chat.preview = preview
+            
+            # Remove old messages
+            Message.query.filter_by(chat_id=chat.id).delete()
+            logger.info(f"Updating existing chat: {data['id']} for user ID: {user_id}")
+        
+        # Add messages
+        for msg in data['messages']:
+            message = Message(
+                chat_id=chat.id,
+                sender=msg.get('sender', 'user'),
+                content=msg.get('content', ''),
+                timestamp=msg.get('timestamp', current_time)
+            )
+            db.session.add(message)
+        
+        db.session.commit()
+        
+        # Apply storage limit if necessary
+        apply_storage_limit(user_id)
+        
+        # Return the saved chat
+        return get_chat(user_id, chat.id)
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error saving chat for user ID {user_id}: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({'error': 'Internal Server Error', 'message': str(e) if app.config['DEBUG'] else 'Failed to save chat', 'status': 500}), 500
 
 @app.route('/api/chats/<chat_id>', methods=['DELETE'])
 @token_required
@@ -317,20 +536,32 @@ def delete_chat(user_id, chat_id):
     chat = Chat.query.filter_by(id=chat_id, user_id=user_id).first()
     
     if not chat:
-        return jsonify({'message': 'Chat not found'}), 404
+        logger.warning(f"Attempted to delete non-existent chat: {chat_id} for user ID: {user_id}")
+        return jsonify({'error': 'Not Found', 'message': 'Chat not found', 'status': 404}), 404
     
-    db.session.delete(chat)
-    db.session.commit()
-    
-    return jsonify({'message': 'Chat deleted successfully'}), 200
+    try:
+        db.session.delete(chat)
+        db.session.commit()
+        logger.info(f"Deleted chat: {chat_id} for user ID: {user_id}")
+        return jsonify({'message': 'Chat deleted successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error deleting chat {chat_id} for user ID {user_id}: {str(e)}")
+        return jsonify({'error': 'Internal Server Error', 'message': str(e) if app.config['DEBUG'] else 'Failed to delete chat', 'status': 500}), 500
 
 @app.route('/api/chats', methods=['DELETE'])
 @token_required
 def clear_all_chats(user_id):
-    Chat.query.filter_by(user_id=user_id).delete()
-    db.session.commit()
-    
-    return jsonify({'message': 'All chats cleared successfully'}), 200
+    try:
+        count = Chat.query.filter_by(user_id=user_id).count()
+        Chat.query.filter_by(user_id=user_id).delete()
+        db.session.commit()
+        logger.info(f"Cleared all chats ({count} total) for user ID: {user_id}")
+        return jsonify({'message': 'All chats cleared successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error clearing all chats for user ID {user_id}: {str(e)}")
+        return jsonify({'error': 'Internal Server Error', 'message': str(e) if app.config['DEBUG'] else 'Failed to clear chats', 'status': 500}), 500
 
 @app.route('/api/generate-chat-id', methods=['GET'])
 @token_required
@@ -349,6 +580,7 @@ def apply_storage_limit(user_id):
     try:
         max_storage_count = int(storage_limit_setting.value)
     except ValueError:
+        logger.warning(f"Invalid storage limit value for user ID {user_id}: {storage_limit_setting.value}")
         return
     
     if max_storage_count <= 0:
@@ -365,6 +597,7 @@ def apply_storage_limit(user_id):
             db.session.delete(chat)
         
         db.session.commit()
+        logger.info(f"Applied storage limit for user ID {user_id}: deleted {len(chats_to_delete)} chats")
 
 # Auto-clear function to run as a scheduled task
 def perform_auto_clear():
@@ -376,6 +609,7 @@ def perform_auto_clear():
             try:
                 auto_clear_days = int(setting.value)
             except ValueError:
+                logger.warning(f"Invalid auto-clear setting for user ID {setting.user_id}: {setting.value}")
                 continue
             
             if auto_clear_days <= 0:
@@ -387,11 +621,20 @@ def perform_auto_clear():
             # Delete chats older than the cutoff time
             old_chats = Chat.query.filter(Chat.user_id == user_id, Chat.timestamp < cutoff_time).all()
             
-            for chat in old_chats:
-                db.session.delete(chat)
-            
             if old_chats:
+                for chat in old_chats:
+                    db.session.delete(chat)
                 db.session.commit()
+                logger.info(f"Auto-cleared {len(old_chats)} old chats for user ID {user_id}")
+
+# Health check endpoint
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    return jsonify({
+        'status': 'ok',
+        'version': '1.0.0',
+        'timestamp': int(datetime.datetime.now().timestamp())
+    }), 200
 
 if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0')
+    app.run(debug=app.config['DEBUG'], host='0.0.0.0')

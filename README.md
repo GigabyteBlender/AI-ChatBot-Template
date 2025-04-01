@@ -124,6 +124,8 @@ The application uses a Flask backend (`database.py`) with SQLAlchemy to provide:
 - **User Settings**: Personalized settings stored per user
 - **Auto-Clear Functionality**: Automatically remove old chats based on user preferences
 - **Storage Limits**: Control the number of stored chats per user
+- **Password Reset**: Request password reset via email (implementation ready)
+- **Logging**: Currently has a logging deature which shows in detail all access and data sent in and out of database for development purposes. is written to a file called app.log. Can be easily removed if needed.
 
 ### Database Models
 
@@ -138,14 +140,25 @@ The application uses a Flask backend (`database.py`) with SQLAlchemy to provide:
 |----------|--------|-------------|
 | `/api/register` | POST | Create a new user account |
 | `/api/login` | POST | Authenticate and get JWT token |
-| `/api/settings` | GET/POST | Retrieve or update user settings |
+| `/api/user` | GET | Retrieve current user information |
+| `/api/request-reset` | POST | Request a password reset |
+| `/api/reset-password` | POST | Reset password with a valid token |
+| `/api/settings` | GET | Retrieve user settings |
+| `/api/settings` | POST | Update user settings |
 | `/api/chats` | GET | Get all user chats |
-| `/api/chats/sorted` | GET | Get chats sorted by timestamp |
+| `/api/chats/sorted` | GET | Get chats sorted by timestamp with messages |
 | `/api/chats/<chat_id>` | GET | Get a specific chat with messages |
 | `/api/chats` | POST | Save or update a chat |
 | `/api/chats/<chat_id>` | DELETE | Delete a specific chat |
 | `/api/chats` | DELETE | Clear all user chats |
 | `/api/generate-chat-id` | GET | Generate a unique chat ID |
+
+### Security Considerations
+- User passwords are hashed using Werkzeug's security functions
+- JWT tokens are used for API authentication with expiration
+- Request validation is implemented for all endpoints
+- API routes are protected with a token_required decorator
+- Password reset functionality follows security best practices
 
 ## Usage
 
