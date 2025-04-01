@@ -90,7 +90,7 @@ body.settings-open {
   z-index: 1000;
   cursor: pointer;
   transition: var(--standard-transition);
-  background-image: url('assets/sidebar-icon.png');
+  background-image: url('../assets/sidebar-icon.png');
   background-position: center;
   background-repeat: no-repeat;
   background-size: 24px;

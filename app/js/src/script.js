@@ -1,7 +1,7 @@
-import { config } from './config.js';
-import { ApiService } from './services/apiService.js';
-import { ChatHistoryService } from './services/chatHistoryService.js';
-import { UIService } from './services/uiService.js';
+import { config } from '../../../config.js';
+import { ApiService } from '../../js/services/apiService.js';
+import { ChatHistoryService } from '../../js/services/chatHistoryService.js';
+import { UIService } from '../../js/services/uiService.js';
 
 /**
  * ChatApp class for managing the chat application state and coordination

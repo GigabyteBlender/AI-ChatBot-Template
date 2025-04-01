@@ -1,4 +1,4 @@
-import { DatabaseUrl } from '../config.js';
+import { DatabaseUrl } from '../../../config.js';
 
 export class AuthService {
     constructor() {

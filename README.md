@@ -42,24 +42,46 @@ A comprehensive web-based chat interface that integrates with AI services throug
 
 ## Project Structure
 
+Frontend
 ```
-Frontend -
-├── index.html              # Main application structure
-├── style.css               # UI styling with dark mode support
-├── script.js               # Core application logic
-├── config.js               # API configuration
-├── settings.html           # Settings interface
-├── settings.js             # Settings management
-├── services/
-│   ├── apiService.js       # OpenRouter API integration
-│   ├── chatHistoryService.js  # History persistence
-│   ├── markdownService.js  # Markdown-to-HTML conversion
-│   └── uiService.js        # UI rendering and interactions
+app/
+├── assets/
+│   ├── example.jpg          # Example image asset
+│   ├── icon.png             # Application icon
+│   └── sidebar-icon.png     # Sidebar icon
+├── css/
+│   └── style.css            # Styling for the application
+├── html/
+│   ├── auth.html            # Authentication page
+│   ├── index.html           # Main application page
+│   └── settings.html        # Settings page
+├── js/
+│   ├── services/
+│   │   ├── apiService.js        # API integration logic
+│   │   ├── authService.js       # Authentication service logic
+│   │   ├── chatHistoryService.js # Chat history management
+│   │   ├── markdownService.js   # Markdown processing logic
+│   │   └── uiService.js         # UI rendering and interactions
+│   ├── src/
+│   │   ├── auth.js              # Authentication-related scripts
+│   │   ├── script.js            # Core application logic
+│   │   └── settings.js          # Settings management
 
-Backend -
-├── database.py         # Backend Flask API for user authentication and chat storage
 ```
-
+Backend
+```
+backend/
+├── instance/                 # Backend instance folder (possibly for Flask configuration)
+├── app.log                   # Log file for backend operations
+├── config.js                 # Backend configuration file
+```
+Project Metadata
+```
+├── .gitignore                # Git ignored files configuration
+├── LICENSE                   # License information for the project
+├── README.md                 # Project documentation
+├── SECURITY.md               # Security guidelines and policies
+```
 ## Getting Started
 
 ### Prerequisites
