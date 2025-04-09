@@ -255,14 +255,19 @@ export class UIService {
      * @returns {Promise<Object>} - The new chat data including ID and initial messages
      */
     async startNewChat() {
-        // Clear the chat interface
-        document.getElementById('chat-container').innerHTML = `
-            <div class="message bot">
-                <div class="message-content">Hello! How can I help you today?</div>
-            </div>
-        `;
+        if (this.isProcessing) {
+            this.showStatusMessage('Please wait until current processing is complete');
+            return null;
+        }
         
         try {
+            // Make sure the chat container is cleared first
+            document.getElementById('chat-container').innerHTML = `
+                <div class="message bot">
+                    <div class="message-content">Hello! How can I help you today?</div>
+                </div>
+            `;
+            
             // Generate new chat data
             const chatId = await this.chatHistoryService.generateChatId();
             const chatMessages = [
@@ -283,6 +288,12 @@ export class UIService {
             // Update the sidebar
             await this.updateChatHistorySidebar(chatId);
             
+            // Clear input field
+            if (this.userInput) {
+                this.userInput.value = '';
+                this.userInput.focus();
+            }
+            
             return {
                 currentChatId: chatId,
                 currentChatMessages: chatMessages
@@ -291,13 +302,16 @@ export class UIService {
             console.error("Error starting new chat:", error);
             // Use a fallback local ID in case of error
             const fallbackId = 'local_' + Date.now() + '_' + Math.random().toString(36).substring(2);
+            this.currentChatId = fallbackId;
+            this.currentChatMessages = [{
+                content: "Hello! How can I help you today?",
+                sender: "bot",
+                timestamp: Date.now()
+            }];
+            
             return {
                 currentChatId: fallbackId,
-                currentChatMessages: [{
-                    content: "Hello! How can I help you today?",
-                    sender: "bot",
-                    timestamp: Date.now()
-                }]
+                currentChatMessages: this.currentChatMessages
             };
         }
     }

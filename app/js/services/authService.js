@@ -6,18 +6,14 @@ export class AuthService {
         this.token = localStorage.getItem('auth_token');
         this.user = null;
         
-        // Check if we have a token and try to get user info
+        // Check if we have a token
         if (this.token) {
             this.getUserInfo();
+        } else {
+            // If no token, and logged out is true, set login status to false
+            // This is to ensure that the app knows the user is logged out
+            localStorage.setItem('isLoggedIn', false); // Ensure token is set in localStorage
         }
-    }
-    
-    /**
-     * Check if the user is currently logged in
-     * @returns {boolean} Whether the user is logged in
-     */
-    isLoggedIn() {
-        return !!this.token;
     }
     
     async login(credentials) {
@@ -39,6 +35,7 @@ export class AuthService {
             const data = await response.json();
             
             if (response.ok) {
+                localStorage.setItem('isLoggedIn', true); // Set login status in localStorage
                 // Store the token and user data
                 this.token = data.token;
                 this.user = data.user;
@@ -46,7 +43,8 @@ export class AuthService {
                 
                 // Dispatch an event to notify other components
                 document.dispatchEvent(new CustomEvent('userLoggedIn', { detail: this.user }));
-                
+                window.location.href = 'index.html'; // Redirect to settings page after login
+
                 return { success: true, user: this.user };
             } else {
                 return { success: false, error: data.message || 'Login failed' };
@@ -124,6 +122,7 @@ export class AuthService {
     logout() {
         this.token = null;
         this.user = null;
+        localStorage.setItem('isLoggedIn', false); // Set login status in localStorage
         localStorage.removeItem('auth_token');
         
         // Dispatch an event to notify other components

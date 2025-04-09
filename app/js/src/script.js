@@ -12,7 +12,7 @@ class ChatApp {
         this.apiService = new ApiService(config.OPENROUTER_API_KEY);
         this.chatHistoryService = new ChatHistoryService();
         this.uiService = new UIService(this.chatHistoryService);
-        
+
         // Chat state
         this.currentChatId = null;
         this.currentChatMessages = [];
@@ -32,7 +32,7 @@ class ChatApp {
         this.authBtn = document.getElementById('auth-button');
         this.clearBtn = document.getElementById('clearBtn');
         this.newChatBtn = document.querySelector('.new-chat');
-        
+
         // Load saved settings
         this.loadSettings();
         
@@ -68,15 +68,28 @@ class ChatApp {
      * Sets up all event listeners
      */
     setupEventListeners() {
-        // Submit button
-        this.submitBtn.addEventListener('click', () => this.handleSubmit());
         
+        const form = document.querySelector('form') || this.userInput.closest('form');
+        if (form) {
+            form.addEventListener('submit', (event) => {
+                event.preventDefault();
+                this.handleSubmit();
+            });
+        }
+
         // Enter key in input field
         this.userInput.addEventListener('keypress', (event) => {
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
                 this.handleSubmit();
+                return false;
             }
+        });
+
+        // Submit button
+        this.submitBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            this.handleSubmit();
         });
         
         // Settings button
@@ -113,7 +126,7 @@ class ChatApp {
         document.addEventListener('chatHistoryChanged', () => {
             this.uiService.updateChatHistorySidebar(this.currentChatId);
         });
-        
+
         // Window beforeunload - prevent accidental closing during processing
         window.addEventListener('beforeunload', (event) => {
             if (this.isProcessing) {
@@ -131,36 +144,58 @@ class ChatApp {
             const chatHistory = await this.chatHistoryService.getAllChatsSorted();
             if (chatHistory && chatHistory.length > 0) {
                 // Load the most recent chat
-                this.loadChat(chatHistory[0].id);
+                await this.loadChat(chatHistory[0].id);
             } else {
                 // Start a new chat
-                this.startNewChat();
+                await this.startNewChat();
             }
         } catch (error) {
             console.error("Error loading initial chat:", error);
-            // Start a new chat as fallback
-            this.startNewChat();
+            // Start a new chat as fallback but don't throw additional errors
+            await this.startNewChat();
         }
     }
     
+    // In script.js, update the processNextInQueue method:
+    processNextInQueue() {
+        // Don't process if we're already processing something
+        if (this.isProcessing || this.messageQueue.length === 0) {
+            return;
+        }
+        
+        // Get the next message
+        const nextMessage = this.messageQueue.shift();
+        
+        // Use setTimeout to give the UI a chance to update
+        setTimeout(() => {
+            console.log('Processing queued message');
+            this.userInput.value = nextMessage;
+            this.handleSubmit();
+        }, 100);
+    }
     /**
      * Handles form submission and gets AI response
      */
-    async handleSubmit() {
-        const userMessage = this.userInput.value.trim();
-        if (!userMessage || this.isProcessing) return;
+    async handleSubmit(event) {
+        // Always prevent form submission
+        if (event) {
+            event.preventDefault();
+        }
         
-        // Add to queue if currently processing
+        const userMessage = this.userInput.value.trim();
+        if (!userMessage) return; // Exit if message is empty
+        
+        // CHANGE: Don't exit if processing, just queue
         if (this.isProcessing) {
+            console.log('Already processing, adding message to queue');
             this.messageQueue.push(userMessage);
-            // Show queued indicator
             this.showStatusMessage('Message queued');
             return;
         }
         
         // Ensure we have a chat ID for this conversation
         if (!this.currentChatId) {
-            this.startNewChat();
+            await this.startNewChat();
         }
         
         try {
@@ -177,12 +212,21 @@ class ChatApp {
             // Get response based on selected mode
             const mode = this.modeSelect.value;
             let botResponse;
+            let useBackupMode = false;
             
             try {
+                // Rest of your logic for getting responses...
                 if (mode === 'api') {
                     // Create context for API request
                     const context = this.createContextForRequest(userMessage);
-                    botResponse = await this.apiService.getCompletion(context, this.temperature);
+                    try {
+                        botResponse = await this.apiService.getCompletion(context, this.temperature);
+                    } catch (apiError) {
+                        console.error('API request failed, using backup mode:', apiError);
+                        useBackupMode = true;
+                        botResponse = this.apiService.getRandomResponse();
+                        this.showStatusMessage('API error - using random response mode');
+                    }
                 } else if (mode === 'random') {
                     botResponse = this.apiService.getRandomResponse();
                 } else {
@@ -198,14 +242,28 @@ class ChatApp {
                     botResponse = "Network error. Please check your connection and try again.";
                 } else if (error.status === 429) {
                     botResponse = "Rate limit exceeded. Please wait a moment before trying again.";
+                } else if (error.message.includes('API key')) {
+                    botResponse = "Invalid API key. Please check your settings.";
                 } else {
-                    botResponse = "Sorry, I encountered an error. Please try again.";
+                    botResponse = "Sorry, I encountered an error. Please try again or check console for details.";
                 }
             }
             
             // Add bot response to chat
             await this.uiService.addMessage(botResponse, 'bot', this.currentChatMessages, this.currentChatId);
+            
+            // If we had an issue with the API, offer to switch modes
+            if (useBackupMode && mode === 'api') {
+                setTimeout(() => {
+                    this.showStatusMessage('Consider switching to "Random" mode in the dropdown if API issues persist');
+                }, 1000);
+            }
+        } catch (finalError) {
+            // CHANGE: Added global error handling
+            console.error('Critical error in handleSubmit:', finalError);
+            this.showStatusMessage('An error occurred processing your request');
         } finally {
+            // CHANGE: Ensure these always run, even if there's an error
             // Reset UI state
             this.isProcessing = false;
             this.submitBtn.disabled = false;

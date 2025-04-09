@@ -1,433 +1,378 @@
 import { DatabaseUrl } from '../../../config.js';
+import { AuthService } from './authService.js';
 
 export class ChatHistoryService {
     constructor() {
-        this.apiBaseUrl = DatabaseUrl.API_URL
-        this.token = localStorage.getItem('auth_token');
-        this.maxStorageCount = 0;
-        this.autoClearDays = 0;
+        this.apiBaseUrl = DatabaseUrl.API_URL;
+        this.localStorageKey = 'chat_history';
+        this.authService = new AuthService();
         
-        // Load settings from API if token exists
-        if (this.token) {
-            this.loadSettings();
-        }
     }
 
     /**
-     * Load user settings from the API
+     * Generates a unique chat ID
+     * @returns {Promise<string>} A unique chat ID
      */
-    async loadSettings() {
-        try {
-            const response = await fetch(`${this.apiBaseUrl}/settings`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${this.token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            if (response.ok) {
-                const settings = await response.json();
-                this.maxStorageCount = parseInt(settings.storageLimit) || 0;
-                this.autoClearDays = parseInt(settings.autoClear) || 0;
-            }
-        } catch (error) {
-            console.error('Failed to load settings:', error);
-        }
-    }
-    
-    /**
-     * Update user settings to the API
-     * @param {Object} settings - Settings object with keys and values
-     */
-    async updateSettings(settings) {
-        if (!this.token) return;
-        
-        try {
-            const response = await fetch(`${this.apiBaseUrl}/settings`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${this.token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(settings)
-            });
-            
-            if (response.ok) {
-                // Update local settings
-                if ('storageLimit' in settings) {
-                    this.maxStorageCount = parseInt(settings.storageLimit) || 0;
-                }
-                if ('autoClear' in settings) {
-                    this.autoClearDays = parseInt(settings.autoClear) || 0;
-                }
-            }
-        } catch (error) {
-            console.error('Failed to update settings:', error);
-        }
-    }
-
-    /**
-     * Save a new chat to history
-     * @param {string} id - Unique ID for the chat
-     * @param {string} title - Title for the chat
-     * @param {Array} messages - Array of message objects
-     * @returns {Promise<Object>} - The saved chat object
-     */
-    async saveChat(id, title, messages) {
-        if (!this.token) {
-            // Fallback to localStorage if not logged in
-            return this.saveChatToLocalStorage(id, title, messages);
-        }
-        
-        try {
-            const response = await fetch(`${this.apiBaseUrl}/chats`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${this.token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    id,
-                    title,
-                    messages
-                })
-            });
-            
-            if (response.ok) {
-                const savedChat = await response.json();
-                this.dispatchHistoryChangeEvent();
-                return savedChat;
-            } else {
-                // Fallback to localStorage if API call fails
-                return this.saveChatToLocalStorage(id, title, messages);
-            }
-        } catch (error) {
-            console.error('Failed to save chat:', error);
-            // Fallback to localStorage if API call fails
-            return this.saveChatToLocalStorage(id, title, messages);
-        }
-    }
-    
-    /**
-     * Fallback method to save chat to localStorage
-     * @param {string} id - Unique ID for the chat
-     * @param {string} title - Title for the chat
-     * @param {Array} messages - Array of message objects
-     * @returns {Object} - The saved chat object
-     */
-    saveChatToLocalStorage(id, title, messages) {
-        const storageKey = 'chat_history';
-        const historyStr = localStorage.getItem(storageKey);
-        const history = historyStr ? JSON.parse(historyStr) : {};
-        
-        const timestamp = Date.now();
-        
-        history[id] = {
-            id,
-            title,
-            messages,
-            timestamp,
-            preview: this.generatePreview(messages)
-        };
-        
-        if (this.maxStorageCount > 0) {
-            const chats = Object.values(history).sort((a, b) => b.timestamp - a.timestamp);
-            
-            if (chats.length > this.maxStorageCount) {
-                const chatsToRemove = chats.slice(this.maxStorageCount);
-                chatsToRemove.forEach(chat => {
-                    delete history[chat.id];
+    async generateChatId() {
+        // Try to get a chat ID from the API if authenticated
+        if (localStorage.getItem('isLoggedIn') === true) {
+            try {
+                const response = await fetch(`${this.apiBaseUrl}/generate-chat-id`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${this.authService.token}`,
+                        'Content-Type': 'application/json'
+                    }
                 });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    return data.id;
+                }
+            } catch (error) {
+                console.error('Error generating chat ID from API:', error);
+                // Fall back to local ID generation
             }
         }
         
-        localStorage.setItem(storageKey, JSON.stringify(history));
-        this.dispatchHistoryChangeEvent();
-        
-        return history[id];
+        // Fallback: Generate a local ID if API call fails or user is not authenticated
+        const timestamp = Date.now();
+        const randomPart = Math.random().toString(36).substring(2, 9);
+        return `chat_${timestamp}_${randomPart}`;
     }
-    
+
     /**
-     * Get all saved chats
-     * @returns {Promise<Object>} Object with chat IDs as keys
+     * Gets a chat by ID
+     * @param {string} chatId - The ID of the chat to retrieve
+     * @returns {Promise<Object>} The chat object with messages
+     */
+    async getChat(chatId) {
+        if (localStorage.getItem('isLoggedIn') === true) {
+            try {
+                const response = await fetch(`${this.apiBaseUrl}/chats/${chatId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${this.authService.token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    return await response.json();
+                } else if (response.status === 404) {
+                    // Chat not found in API, try local storage
+                    return this.getLocalChat(chatId);
+                }
+            } catch (error) {
+                console.error('Error fetching chat from API:', error);
+                // Fall back to local storage
+            }
+        }
+        
+        // Get from local storage if not authenticated or API call fails
+        return this.getLocalChat(chatId);
+    }
+
+    /**
+     * Gets a chat by ID from local storage
+     * @param {string} chatId - The ID of the chat to retrieve
+     * @returns {Object|null} The chat object with messages or null if not found
+     */
+    getLocalChat(chatId) {
+        const chatHistory = this.getLocalChatHistory();
+        const chat = chatHistory[chatId];
+        return chat || null;
+    }
+
+    /**
+     * Gets all chats
+     * @returns {Promise<Object>} All chat objects
      */
     async getAllChats() {
-        if (!this.token) {
-            // Fallback to localStorage if not logged in
-            return this.getAllChatsFromLocalStorage();
+        if (localStorage.getItem('isLoggedIn') === true) {
+            try {
+                const response = await fetch(`${this.apiBaseUrl}/chats`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${this.authService.token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    return await response.json();
+                }
+            } catch (error) {
+                console.error('Error fetching all chats from API:', error);
+                // Fall back to local storage
+            }
         }
         
-        try {
-            const response = await fetch(`${this.apiBaseUrl}/chats`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${this.token}`
-                }
-            });
-            
-            if (response.ok) {
-                return await response.json();
-            } else {
-                // Fallback to localStorage if API call fails
-                return this.getAllChatsFromLocalStorage();
-            }
-        } catch (error) {
-            console.error('Failed to get chats:', error);
-            // Fallback to localStorage if API call fails
-            return this.getAllChatsFromLocalStorage();
-        }
+        // Get from local storage if not authenticated or API call fails
+        return this.getLocalChatHistory();
     }
-    
+
     /**
-     * Fallback method to get chats from localStorage
-     * @returns {Object} Object with chat IDs as keys
-     */
-    getAllChatsFromLocalStorage() {
-        const storageKey = 'chat_history';
-        const historyStr = localStorage.getItem(storageKey);
-        return historyStr ? JSON.parse(historyStr) : {};
-    }
-    
-    /**
-     * Get all chats as an array, sorted by timestamp
-     * @returns {Promise<Array>} Array of chat objects
+     * Gets all chats sorted by timestamp (newest first)
+     * @returns {Promise<Array>} Sorted array of chat objects
      */
     async getAllChatsSorted() {
-        if (!this.token) {
-            // Fallback to localStorage if not logged in
-            const history = this.getAllChatsFromLocalStorage();
-            return Object.values(history).sort((a, b) => b.timestamp - a.timestamp);
-        }
-        
-        try {
-            const response = await fetch(`${this.apiBaseUrl}/chats/sorted`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${this.token}`
+        if (localStorage.getItem('isLoggedIn') === true) {
+            try {
+                const response = await fetch(`${this.apiBaseUrl}/chats/sorted`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${this.authService.token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    return await response.json();
                 }
-            });
-            
-            if (response.ok) {
-                return await response.json();
-            } else {
-                // Fallback to localStorage if API call fails
-                const history = this.getAllChatsFromLocalStorage();
-                return Object.values(history).sort((a, b) => b.timestamp - a.timestamp);
+            } catch (error) {
+                console.error('Error fetching sorted chats from API:', error);
+                // Fall back to local sorting
             }
-        } catch (error) {
-            console.error('Failed to get sorted chats:', error);
-            // Fallback to localStorage if API call fails
-            const history = this.getAllChatsFromLocalStorage();
-            return Object.values(history).sort((a, b) => b.timestamp - a.timestamp);
-        }
-    }
-    
-    /**
-     * Get a specific chat by ID
-     * @param {string} id - The chat ID
-     * @returns {Promise<Object|null>} The chat object or null if not found
-     */
-    async getChat(id) {
-        if (!this.token) {
-            // Fallback to localStorage if not logged in
-            const history = this.getAllChatsFromLocalStorage();
-            return history[id] || null;
         }
         
-        try {
-            const response = await fetch(`${this.apiBaseUrl}/chats/${id}`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${this.token}`
+        // Sort locally if not authenticated or API call fails
+        return this.getLocalChatsSorted();
+    }
+
+    /**
+     * Gets all chats from local storage sorted by timestamp (newest first)
+     * @returns {Array} Sorted array of chat objects
+     */
+    getLocalChatsSorted() {
+        const chatHistory = this.getLocalChatHistory();
+        
+        // Convert to array and sort by timestamp
+        return Object.values(chatHistory)
+            .sort((a, b) => b.timestamp - a.timestamp);
+    }
+
+    /**
+     * Saves a chat
+     * @param {string} chatId - The ID of the chat
+     * @param {string} title - The title of the chat
+     * @param {Array} messages - Array of message objects
+     * @returns {Promise<Object>} The saved chat object
+     */
+    async saveChat(chatId, title, messages) {
+        const chatData = {
+            id: chatId,
+            title: title,
+            messages: messages,
+            timestamp: Date.now()
+        };
+        
+        if (localStorage.getItem('isLoggedIn') === true) {
+            try {
+                const response = await fetch(`${this.apiBaseUrl}/chats`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${this.authService.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(chatData)
+                });
+                
+                if (response.ok) {
+                    // Notify other components about the change
+                    document.dispatchEvent(new CustomEvent('chatHistoryChanged'));
+                    return await response.json();
                 }
-            });
-            
-            if (response.ok) {
-                return await response.json();
-            } else if (response.status === 404) {
-                return null;
-            } else {
-                // Fallback to localStorage if API call fails
-                const history = this.getAllChatsFromLocalStorage();
-                return history[id] || null;
+            } catch (error) {
+                console.error('Error saving chat to API:', error);
+                // Fall back to local storage
             }
-        } catch (error) {
-            console.error(`Failed to get chat ${id}:`, error);
-            // Fallback to localStorage if API call fails
-            const history = this.getAllChatsFromLocalStorage();
-            return history[id] || null;
-        }
-    }
-    
-    /**
-     * Delete a chat from history
-     * @param {string} id - The chat ID to delete
-     * @returns {Promise<boolean>} Whether deletion was successful
-     */
-    async deleteChat(id) {
-        if (!this.token) {
-            // Fallback to localStorage if not logged in
-            return this.deleteChatFromLocalStorage(id);
         }
         
-        try {
-            const response = await fetch(`${this.apiBaseUrl}/chats/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${this.token}`
+        // Save to local storage if not authenticated or API call fails
+        return this.saveLocalChat(chatId, chatData);
+    }
+
+    /**
+     * Saves a chat to local storage
+     * @param {string} chatId - The ID of the chat
+     * @param {Object} chatData - The chat data to save
+     * @returns {Object} The saved chat object
+     */
+    saveLocalChat(chatId, chatData) {
+        const chatHistory = this.getLocalChatHistory();
+        chatHistory[chatId] = chatData;
+        this.saveLocalChatHistory(chatHistory);
+        
+        // Notify other components about the change
+        document.dispatchEvent(new CustomEvent('chatHistoryChanged'));
+        
+        return chatData;
+    }
+
+    /**
+     * Deletes a chat
+     * @param {string} chatId - The ID of the chat to delete
+     * @returns {Promise<boolean>} Whether the deletion was successful
+     */
+    async deleteChat(chatId) {
+        if (localStorage.getItem('isLoggedIn') === true) {
+            try {
+                const response = await fetch(`${this.apiBaseUrl}/chats/${chatId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${this.authService.token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    // Notify other components about the change
+                    document.dispatchEvent(new CustomEvent('chatHistoryChanged'));
+                    return true;
                 }
-            });
-            
-            if (response.ok) {
-                this.dispatchHistoryChangeEvent();
-                return true;
-            } else {
-                // Fallback to localStorage if API call fails
-                return this.deleteChatFromLocalStorage(id);
+            } catch (error) {
+                console.error('Error deleting chat from API:', error);
+                // Fall back to local storage
             }
-        } catch (error) {
-            console.error(`Failed to delete chat ${id}:`, error);
-            // Fallback to localStorage if API call fails
-            return this.deleteChatFromLocalStorage(id);
         }
-    }
-    
-    /**
-     * Fallback method to delete chat from localStorage
-     * @param {string} id - The chat ID to delete
-     * @returns {boolean} Whether deletion was successful
-     */
-    deleteChatFromLocalStorage(id) {
-        const storageKey = 'chat_history';
-        const historyStr = localStorage.getItem(storageKey);
-        const history = historyStr ? JSON.parse(historyStr) : {};
         
-        if (history[id]) {
-            delete history[id];
-            localStorage.setItem(storageKey, JSON.stringify(history));
-            this.dispatchHistoryChangeEvent();
+        // Delete from local storage if not authenticated or API call fails
+        return this.deleteLocalChat(chatId);
+    }
+
+    /**
+     * Deletes a chat from local storage
+     * @param {string} chatId - The ID of the chat to delete
+     * @returns {boolean} Whether the deletion was successful
+     */
+    deleteLocalChat(chatId) {
+        const chatHistory = this.getLocalChatHistory();
+        
+        if (chatId in chatHistory) {
+            delete chatHistory[chatId];
+            this.saveLocalChatHistory(chatHistory);
+            
+            // Notify other components about the change
+            document.dispatchEvent(new CustomEvent('chatHistoryChanged'));
+            
             return true;
         }
         
         return false;
     }
-    
+
     /**
-     * Clear all chat history
-     * @returns {Promise<boolean>} Whether clearing was successful
+     * Clears all chats
+     * @returns {Promise<boolean>} Whether the deletion was successful
      */
     async clearAllChats() {
-        if (!this.token) {
-            // Fallback to localStorage if not logged in
-            localStorage.removeItem('chat_history');
-            this.dispatchHistoryChangeEvent();
-            return true;
+        if (localStorage.getItem('isLoggedIn') === true) {
+            try {
+                const response = await fetch(`${this.apiBaseUrl}/chats`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${this.authService.token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    // Notify other components about the change
+                    document.dispatchEvent(new CustomEvent('chatHistoryChanged'));
+                    return true;
+                }
+            } catch (error) {
+                console.error('Error clearing all chats from API:', error);
+                // Fall back to local storage
+            }
         }
         
+        // Clear local storage if not authenticated or API call fails
+        return this.clearLocalChats();
+    }
+
+    /**
+     * Clears all chats from local storage
+     * @returns {boolean} Whether the deletion was successful
+     */
+    clearLocalChats() {
+        this.saveLocalChatHistory({});
+        
+        // Notify other components about the change
+        document.dispatchEvent(new CustomEvent('chatHistoryChanged'));
+        
+        return true;
+    }
+
+    /**
+     * Gets the chat history from local storage
+     * @returns {Object} The chat history object
+     */
+    getLocalChatHistory() {
         try {
-            const response = await fetch(`${this.apiBaseUrl}/chats`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${this.token}`
-                }
+            const chatHistoryString = localStorage.getItem(this.localStorageKey);
+            return chatHistoryString ? JSON.parse(chatHistoryString) : {};
+        } catch (error) {
+            console.error('Error parsing chat history from local storage:', error);
+            return {};
+        }
+    }
+
+    /**
+     * Saves the chat history to local storage
+     * @param {Object} chatHistory - The chat history object to save
+     */
+    saveLocalChatHistory(chatHistory) {
+        try {
+            localStorage.setItem(this.localStorageKey, JSON.stringify(chatHistory));
+        } catch (error) {
+            console.error('Error saving chat history to local storage:', error);
+            
+            // If the error is due to storage limits, try to remove the oldest chats
+            if (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+                this.applyLocalStorageLimit();
+            }
+        }
+    }
+
+    /**
+     * Applies a storage limit to local storage to prevent quota exceeded errors
+     * Default: Keep only the 10 most recent chats
+     */
+    applyLocalStorageLimit(limit = 10) {
+        try {
+            const chatHistory = this.getLocalChatHistory();
+            const sortedChats = Object.entries(chatHistory)
+                .sort(([, a], [, b]) => b.timestamp - a.timestamp);
+            
+            if (sortedChats.length <= limit) {
+                return; // No need to delete anything
+            }
+            
+            // Keep only the most recent chats up to the limit
+            const limitedChatHistory = {};
+            sortedChats.slice(0, limit).forEach(([id, chat]) => {
+                limitedChatHistory[id] = chat;
             });
             
-            if (response.ok) {
-                this.dispatchHistoryChangeEvent();
-                return true;
-            } else {
-                // Fallback to localStorage if API call fails
-                localStorage.removeItem('chat_history');
-                this.dispatchHistoryChangeEvent();
-                return true;
-            }
+            // Save the reduced history
+            localStorage.setItem(this.localStorageKey, JSON.stringify(limitedChatHistory));
+            console.log(`Applied storage limit: kept ${limit} most recent chats`);
         } catch (error) {
-            console.error('Failed to clear all chats:', error);
-            // Fallback to localStorage if API call fails
-            localStorage.removeItem('chat_history');
-            this.dispatchHistoryChangeEvent();
-            return true;
-        }
-    }
-    
-    /**
-     * Generate a short preview from the messages
-     * @param {Array} messages - Array of message objects
-     * @returns {string} A short preview of the chat
-     */
-    generatePreview(messages) {
-        if (!messages || messages.length === 0) {
-            return "New chat";
-        }
-        
-        // Find the first user message
-        const firstUserMessage = messages.find(msg => msg.sender === 'user');
-        if (firstUserMessage) {
-            // Return max 30 characters of the first user message
-            return firstUserMessage.content.length > 30 
-                ? firstUserMessage.content.substring(0, 27) + '...'
-                : firstUserMessage.content;
-        }
-        
-        return "New chat";
-    }
-    
-    /**
-     * Generate a unique ID for a new chat
-     * @returns {Promise<string>} A unique chat ID
-     */
-    async generateChatId() {
-        if (!this.token) {
-            // Fallback to local generation if not logged in
-            return 'chat_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
-        }
-        
-        try {
-            const response = await fetch(`${this.apiBaseUrl}/generate-chat-id`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${this.token}`
-                }
-            });
+            console.error('Error applying storage limit:', error);
             
-            if (response.ok) {
-                const data = await response.json();
-                return data.id;
-            } else {
-                // Fallback to local generation if API call fails
-                return 'chat_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
-            }
-        } catch (error) {
-            console.error('Failed to generate chat ID:', error);
-            // Fallback to local generation if API call fails
-            return 'chat_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+            // If all else fails, clear everything
+            localStorage.removeItem(this.localStorageKey);
         }
     }
-    
+
     /**
-     * Dispatch a custom event to notify the UI that chat history has changed
+     * Checks if there are any saved chats
+     * @returns {Promise<boolean>} Whether there are any saved chats
      */
-    dispatchHistoryChangeEvent() {
-        const event = new CustomEvent('chatHistoryChanged');
-        document.dispatchEvent(event);
-    }
-    
-    /**
-     * Set the authentication token
-     * @param {string} token - The JWT token
-     */
-    setToken(token) {
-        this.token = token;
-        localStorage.setItem('auth_token', token);
-        this.loadSettings();
-    }
-    
-    /**
-     * Clear the authentication token
-     */
-    clearToken() {
-        this.token = null;
-        localStorage.removeItem('auth_token');
+    async hasChats() {
+        const chats = await this.getAllChatsSorted();
+        return chats && chats.length > 0;
     }
 }

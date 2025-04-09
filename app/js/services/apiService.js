@@ -14,14 +14,14 @@ export class ApiService {
      */
     loadSettings() {
         // Get model setting
-        const model = localStorage.getItem('model') || 'google/gemini-2.0-flash-lite-preview-02-05:free';
+        const model = localStorage.getItem('model') || 'deepseek/deepseek-chat:free';
         
         // Check if we're using a custom model
         if (model === 'custom') {
             const customModel = localStorage.getItem('customModel');
             this.MODEL = customModel && customModel.trim() !== '' 
                 ? customModel 
-                : 'google/gemini-2.0-flash-lite-preview-02-05:free';
+                : 'deepseek/deepseek-chat:free';
         } else {
             this.MODEL = model;
         }
@@ -31,6 +31,28 @@ export class ApiService {
         
         // Default temperature
         this.defaultTemperature = parseFloat(localStorage.getItem('temperature')) || 1.0;
+    }
+
+    // Add this to the ApiService class
+    async validateApiKey() {
+        try {
+            if (!this.apiKey || this.apiKey.trim() === '') {
+                return false;
+            }
+            
+            // Make a simple request to check if the API key is valid
+            const response = await fetch('https://openrouter.ai/api/v1/models', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${this.apiKey}`
+                }
+            });
+            
+            return response.ok;
+        } catch (error) {
+            console.error('API key validation error:', error);
+            return false;
+        }
     }
     
     /**
@@ -57,12 +79,12 @@ export class ApiService {
             // Check if input is a context object or just a string
             if (typeof input === 'object' && input.messages) {
                 messages = input.messages;
-
+    
                 // Make sure we have a system message at the beginning if it doesn't exist
                 if (!messages.some(m => m.role === 'system')) {
                     messages.unshift({
                         role: 'system',
-                        content: 'You are a helpful assistant.'  // Customize this system message
+                        content: 'You are a helpful assistant.'
                     });
                 }
                 
@@ -76,12 +98,10 @@ export class ApiService {
                 
                 // Apply max context limit if set
                 if (this.maxContext > 0 && messages.length > this.maxContext + 2) {
-                    // Keep system message (index 0), and take the last maxContext messages
-                    // +2 accounts for system message and the latest user message
+                    // Keep system message and take the last maxContext messages
                     const systemMessage = messages.find(m => m.role === 'system');
                     const limitedMessages = messages.slice(-this.maxContext);
                     
-                    // If we found a system message, add it back at the beginning
                     if (systemMessage) {
                         limitedMessages.unshift(systemMessage);
                     }
@@ -93,7 +113,7 @@ export class ApiService {
                 messages = [
                     {
                         role: 'system',
-                        content: 'You are a helpful assistant.'  // Customize this system message
+                        content: 'You are a helpful assistant.'
                     },
                     {
                         role: 'user',
@@ -101,6 +121,14 @@ export class ApiService {
                     }
                 ];
             }
+            
+            // Log the request for debugging
+            console.log('API Request payload:', {
+                model: this.MODEL,
+                messages: messages,
+                temperature: tempToUse,
+                max_tokens: 1000
+            });
             
             const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                 method: 'POST',
@@ -118,55 +146,66 @@ export class ApiService {
             });
             
             if (!response.ok) {
-                throw new Error(`API request failed with status ${response.status}`);
+                const errorText = await response.text();
+                let errorData;
+                
+                try {
+                    // Try to parse as JSON
+                    errorData = JSON.parse(errorText);
+                } catch (e) {
+                    // If not JSON, use the text directly
+                    errorData = { error: { message: errorText } };
+                }
+                
+                console.error('API Error Response:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    errorData: errorData
+                });
+                
+                if (response.status === 400) {
+                    // Handle specific 400 error - could be malformed request
+                    throw new Error(`Bad request: ${errorData?.error?.message || 'Check API key and request format'}`);
+                } else if (response.status === 401 || response.status === 403) {
+                    // Auth error
+                    throw new Error(`Authentication error: ${errorData?.error?.message || 'Invalid API key'}`);
+                } else {
+                    throw new Error(`API request failed: ${errorData?.error?.message || response.statusText}`);
+                }
             }
             
             const data = await response.json();
             
             // Handle different response formats
             if (data.choices && data.choices.length > 0) {
-                // Format 1: OpenAI-like format with choices array containing message objects
                 if (data.choices[0].message && data.choices[0].message.content) {
                     return data.choices[0].message.content;
                 }
                 
-                // Format 2: Some APIs include text directly in the choice
                 if (data.choices[0].text) {
                     return data.choices[0].text;
                 }
                 
-                // Format 3: Some might use 'response' instead of 'content'
                 if (data.choices[0].message && data.choices[0].message.response) {
                     return data.choices[0].message.response;
                 }
                 
-                // If we get here, the format is unexpected but we have choices
                 console.warn('Unknown response format in choices:', data.choices[0]);
                 return JSON.stringify(data.choices[0].message || data.choices[0]);
             }
             
-            // Format 4: Some APIs might put the response at the top level
             if (data.response || data.output || data.text || data.content) {
                 return data.response || data.output || data.text || data.content;
             }
             
-            // If we can't determine the format, log the issue and return an error message
-            // In the getCompletion method of apiService.js
-            if (!response.ok) {
-                const errorData = await response.json();
-                if (errorData && errorData.error) {
-                    throw new Error(`API error: ${errorData.error.message || 'Unknown error'}`);
-                }
-                throw new Error(`API request failed with status ${response.status}`);
-            }
-            
+            console.error('Unrecognized API response format:', data);
+            return "Sorry, I couldn't understand the API response.";
         } catch (error) {
             if (error.name === 'AbortError') {
                 console.log('Request was aborted');
-                throw error;
+            } else {
+                console.error('API request error:', error);
             }
-            
-            console.error('API request error:', error);
             throw error;
         } finally {
             this.controller = null;

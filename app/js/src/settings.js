@@ -11,7 +11,7 @@ class SettingsManager {
             maxContext: 5,
             autoClear: 0,
             storageLimit: 0,
-            model: 'google/gemini-2.0-flash-lite-preview-02-05:free',
+            model: 'deepseek/deepseek-chat:free',
             customModel: '',
             messageSounds: true
         };

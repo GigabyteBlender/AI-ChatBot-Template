@@ -4,12 +4,6 @@ class AuthPage {
     constructor() {
         this.authService = new AuthService();
         
-        // Check if user is already logged in
-        if (this.authService.isLoggedIn()) {
-            // Redirect back to the main page if already logged in
-            window.location.href = 'index.html';
-        }
-        
         // Initialize UI elements
         this.initElements();
         this.attachEventListeners();

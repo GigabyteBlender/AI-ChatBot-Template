@@ -203,7 +203,6 @@ Access settings by clicking the gear icon to:
 
 Currently supported models include:
 ```
-- Gemini 2.0 Flash
 - DeepSeek R1 Zero
 - Rogue Rose v0.2
 - DeepSeek V3
@@ -240,10 +239,6 @@ Currently supported models include:
   - `SECRET_KEY`: Secure random string for JWT token signing
 
 ## Roadmap
-
-Currently working on: 
-- *URGENT* saving chats is inteffering with the api call chats (fixing in progress)
-- bug when loading and creating chats. multiple appear in side bar (fixing later)
 
 Planned improvements:
 - Enhanced user authentication with password reset
