@@ -62,11 +62,7 @@ const ApiSettings = () => {
           onChange={handleModelChange}
           className="select-control"
         >
-          <option value="deepseek/deepseek-r1-zero:free">OpenRouter API</option>
-          <option value="random">Random Mode</option>
           <option value="deepseek/deepseek-chat:free">DeepSeek V3</option>
-          <option value="cognitivecomputations/dolphin3.0-mistral-24b:free">Dolphin3.0 Mistral</option>
-          <option value="sophosympatheia/rogue-rose-103b-v0.2:free">Rogue Rose v0.2</option>
           <option value="custom">Custom Model</option>
         </select>
       </div>

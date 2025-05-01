@@ -8,7 +8,7 @@ const defaultSettings = {
     messageSounds: true
   },
   chat: {
-    temperature: 1.0,
+    temperature: 0.7,  // Changed default from 1.0 to 0.7 for better responses
     displaySpeed: 20,
     maxContext: 5
   },

@@ -10,6 +10,15 @@
   z-index: 1;
 }
 
+.custom-model-input {
+  padding: 8px 12px;
+  margin-left: 10px;
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-background);
+  font-size: 14px;
+}
+
 .mode-container {
   display: flex;
   align-items: center;

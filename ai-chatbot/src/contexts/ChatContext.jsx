@@ -153,23 +153,68 @@ export const ChatProvider = ({ children }) => {
     setLoading(true);
     
     try {
-      // In a real app, this would call an AI API
-      // For demo, we'll simulate a response
-      setTimeout(() => {
-        const responses = [
-          "I understand what you're asking. Let me help with that.",
-          "That's an interesting question. Here's what I think...",
-          "Based on my knowledge, I can provide this information.",
-          "I'd be happy to assist with your request.",
-          "Let me analyze that and give you my thoughts."
-        ];
-        
-        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-        addMessage(randomResponse, 'bot');
+      // Get the model from settings
+      const selectedModel = settings.api.model === 'custom' 
+        ? settings.api.customModel 
+        : settings.api.model;
+      
+      // Prepare the conversation history for the API request
+      const conversationHistory = messages.map(msg => ({
+        role: msg.type === 'user' ? 'user' : 'assistant',
+        content: msg.content
+      }));
+      
+      // Add the new user message
+      conversationHistory.push({
+        role: 'user',
+        content: message
+      });
+      
+      // Prepare the API request payload
+      const payload = {
+        model: selectedModel,
+        messages: conversationHistory,
+        temperature: settings.chat.temperature,
+        max_tokens: 1000,
+      };
+      
+      // Get your API key (in a real app, use environment variables)
+      const apiKey = localStorage.getItem('apiKey') || '';
+      
+      if (!apiKey) {
+        addMessage("Please add your API key in settings.", 'bot');
         setLoading(false);
-      }, 1000);
+        return;
+      }
+      
+      // Make the API request
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': window.location.origin, // Required by OpenRouter
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || 'API request failed');
+      }
+      
+      const data = await response.json();
+      
+      // Extract the assistant's response
+      const assistantResponse = data.choices?.[0]?.message?.content || 
+        "I'm sorry, but I couldn't generate a response.";
+        
+      // Add the bot's response to the chat
+      addMessage(assistantResponse, 'bot');
     } catch (error) {
-      addMessage("I'm sorry, but I encountered an error processing your request. Please try again.", 'bot');
+      console.error("API Error:", error);
+      addMessage(`Error: ${error.message || "I'm sorry, but I encountered an error processing your request. Please try again."}`, 'bot');
+    } finally {
       setLoading(false);
     }
   };

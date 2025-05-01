@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SettingsContext } from '../../contexts/SettingsContext';
 import './styles/ModeSelector.css';
@@ -6,9 +6,16 @@ import './styles/ModeSelector.css';
 const ModeSelector = ({ onClear }) => {
   const { settings, updateSettings } = useContext(SettingsContext);
   const navigate = useNavigate();
+  const [showCustomInput, setShowCustomInput] = useState(settings.api.model === 'custom');
   
   const handleModelChange = (e) => {
-    updateSettings('api', 'model', e.target.value);
+    const newModel = e.target.value;
+    updateSettings('api', 'model', newModel);
+    setShowCustomInput(newModel === 'custom');
+  };
+  
+  const handleCustomModelChange = (e) => {
+    updateSettings('api', 'customModel', e.target.value);
   };
   
   const handleSettingsClick = () => {
@@ -24,13 +31,19 @@ const ModeSelector = ({ onClear }) => {
           onChange={handleModelChange}
           aria-label="Select AI model"
         >
-          <option value="deepseek/deepseek-r1-zero:free">OpenRouter API</option>
-          <option value="random">Random Mode</option>
-          <option value="deepseek/deepseek-chat:free">DeepSeek V3</option>
-          <option value="cognitivecomputations/dolphin3.0-mistral-24b:free">Dolphin3.0 Mistral</option>
-          <option value="sophosympatheia/rogue-rose-103b-v0.2:free">Rogue Rose v0.2</option>
+          <option value="deepseek/deepseek-chat:free">DeepSeek Chat</option>
           <option value="custom">Custom Model</option>
         </select>
+        
+        {showCustomInput && (
+          <input
+            type="text"
+            className="custom-model-input"
+            placeholder="model identifier"
+            value={settings.api.customModel}
+            onChange={handleCustomModelChange}
+          />
+        )}
       </div>
       
       <div className="action-buttons">
