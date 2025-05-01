@@ -28,7 +28,7 @@ ai-chatbot/
 │ ├── pages/ # Top-level app pages
 │ ├── services/ # API, auth, and storage logic
 │ ├── utils/ # Utility functions (formatters, validators)
-│ ├── styles/ # Global and variable CSS
+│ ├── styles/ # Global CSS
 │ ├── App.jsx # Main app component
 │ ├── index.jsx # Entry point
 │ └── routes.jsx # App routes
@@ -90,7 +90,7 @@ Visit [http://localhost:3000](http://localhost:3000) to view the app.
 ## 🧩 Customization
 
 - **Styling**:  
-  Modify `src/styles/global.css` and `src/styles/variables.css` for theming.
+  Modify `src/styles/global.css` for theming.
 - **Extending Functionality**:  
   Add new components or services as needed. Use React Context for global state.
 
