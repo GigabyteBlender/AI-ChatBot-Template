@@ -18,7 +18,7 @@
 }
 
 .chat-content-wrapper {
-  max-width: 900px;
+  max-width: 850px;
   width: 100%;
   margin: 0 auto;
   padding: 20px 0;
@@ -34,8 +34,8 @@
 }
 
 .spinner {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   border: 2px solid rgba(99, 102, 241, 0.2);
   border-radius: 50%;
   border-top-color: var(--color-spinner);

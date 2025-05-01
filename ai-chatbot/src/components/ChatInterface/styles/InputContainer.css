@@ -19,10 +19,12 @@
 }
 
 #userInput {
+  position: relative;
+  bottom: 30px;
   flex: 1;
-  min-height: 90px; /* Taller input box */
-  max-height: 200px;
-  padding: 14px 50px 14px 15px; /* Increased vertical padding */
+  min-height: 100px; /* input box height */
+  max-height: 100px;
+  padding: 14px 50px 14px 15px; /* vertical padding */
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   resize: none;
@@ -32,7 +34,7 @@
   overflow-y: auto;
   line-height: 1.5;
   box-shadow: 0 0 15px rgba(0,0,0,0.1);
-  font-size: 1rem; /* Slightly larger font */
+  font-size: 1rem; /* font size */
 }
 
 #userInput:focus {
@@ -48,11 +50,11 @@
 #submitBtn {
   position: absolute;
   right: 30px;
-  bottom: 55px; /* Adjusted for the taller input */
+  bottom: 95px; /* Adjusted for the taller input */
   background-color: var(--color-accent);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 20px;
   transition: background-color 0.2s ease;
   padding: 8px 16px;
   font-weight: 500;
@@ -87,13 +89,13 @@
   }
   
   #userInput {
+    bottom: 10px;
     padding: 12px 45px 12px 12px;
-    min-height: 90px;
   }
   
   #submitBtn {
     right: 24px;
-    bottom: 55px;
+    bottom: 80px;
     padding: 6px 12px;
   }
 }

@@ -4,58 +4,41 @@ import { SettingsContext } from '../../contexts/SettingsContext';
 import './styles/ModeSelector.css';
 
 const ModeSelector = ({ onClear }) => {
-  const { settings, updateSettings } = useContext(SettingsContext);
-  const navigate = useNavigate();
-  const [showCustomInput, setShowCustomInput] = useState(settings.api.model === 'custom');
-  
-  const handleModelChange = (e) => {
-    const newModel = e.target.value;
-    updateSettings('api', 'model', newModel);
-    setShowCustomInput(newModel === 'custom');
-  };
-  
-  const handleCustomModelChange = (e) => {
-    updateSettings('api', 'customModel', e.target.value);
-  };
-  
-  const handleSettingsClick = () => {
-    navigate('/settings');
-  };
+	const { settings, updateSettings } = useContext(SettingsContext);
+	const navigate = useNavigate();
 
-  return (
-    <div className="mode-selector">
-      <div className="mode-container">
-        <select 
-          id="mode" 
-          value={settings.api.model}
-          onChange={handleModelChange}
-          aria-label="Select AI model"
-        >
-          <option value="deepseek/deepseek-chat:free">DeepSeek Chat</option>
-          <option value="custom">Custom Model</option>
-        </select>
-        
-        {showCustomInput && (
-          <input
-            type="text"
-            className="custom-model-input"
-            placeholder="model identifier"
-            value={settings.api.customModel}
-            onChange={handleCustomModelChange}
-          />
-        )}
-      </div>
-      
-      <div className="action-buttons">
-        <button id="clearBtn" onClick={onClear} aria-label="Clear chat">
-          Clear
-        </button>
-        <button id="settingsBtn" onClick={handleSettingsClick} aria-label="Settings">
-          ⚙️
-        </button>
-      </div>
-    </div>
-  );
+	const handleModelChange = (e) => {
+		const newModel = e.target.value;
+		updateSettings('api', 'model', newModel);
+	};
+
+	const handleSettingsClick = () => {
+		navigate('/settings');
+	};
+
+	return (
+		<div className="mode-selector">
+			<div className="mode-container">
+				<select
+					id="mode"
+					value={settings.api.model}
+					onChange={handleModelChange}
+					aria-label="Select AI model"
+				>
+					<option value="deepseek/deepseek-chat:free">DeepSeek Chat</option>
+				</select>
+			</div>
+
+			<div className="action-buttons">
+				<button id="clearBtn" onClick={onClear} aria-label="Clear chat">
+					Clear
+				</button>
+				<button id="settingsBtn" onClick={handleSettingsClick} aria-label="Settings">
+					⚙️
+				</button>
+			</div>
+		</div>
+	);
 };
 
 export default ModeSelector;
