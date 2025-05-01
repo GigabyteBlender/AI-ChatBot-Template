@@ -3,6 +3,8 @@
   padding: var(--spacing-md) var(--spacing-lg);
   margin-bottom: var(--spacing-md);
   border-radius: var(--radius-lg);
+  margin-left: 10%;
+  margin-right: 10%;
   max-width: 100%;
   position: relative;
   line-height: 1.6;
