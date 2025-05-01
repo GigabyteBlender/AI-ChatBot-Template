@@ -3,3 +3,4 @@ config.js
 instance
 *.log
 *.db
+node_modules

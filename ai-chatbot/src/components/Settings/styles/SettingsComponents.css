@@ -1,0 +1,250 @@
+.settings-section {
+    color: var(--text-color);
+  }
+  
+  .settings-section h2 {
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-color);
+  }
+  
+  .setting-group {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .setting-group:last-child {
+    border-bottom: none;
+  }
+  
+  .setting-group label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 500;
+    color: var(--text-color);
+  }
+  
+  .setting-description {
+    margin-top: 8px;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+  
+  /* Range Control Styles */
+  .range-control {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  
+  .range-control input[type="range"] {
+    flex: 1;
+    height: 5px;
+    background-color: var(--border-color);
+    border-radius: 5px;
+    appearance: none;
+    outline: none;
+  }
+  
+  .range-control input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    background-color: var(--primary-color);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .range-control input[type="range"]::-webkit-slider-thumb:hover {
+    background-color: var(--primary-hover);
+  }
+  
+  .range-value {
+    min-width: 40px;
+    text-align: right;
+    font-weight: 500;
+  }
+  
+  /* Toggle Control Styles */
+  .toggle-control {
+    display: flex;
+    align-items: center;
+  }
+  
+  .toggle-control input[type="checkbox"] {
+    appearance: none;
+    width: 50px;
+    height: 26px;
+    background-color: var(--border-color);
+    border-radius: 13px;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-right: 10px;
+  }
+  
+  .toggle-control input[type="checkbox"]:checked {
+    background-color: var(--primary-color);
+  }
+  
+  .toggle-control input[type="checkbox"]::before {
+    content: '';
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    background-color: white;
+    transition: transform 0.3s;
+  }
+  
+  .toggle-control input[type="checkbox"]:checked::before {
+    transform: translateX(24px);
+  }
+  
+  .toggle-label {
+    font-size: 14px;
+    font-weight: 500;
+  }
+  
+  /* Select Control Styles */
+  .select-control {
+    width: 100%;
+    max-width: 300px;
+    padding: 10px 15px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    font-size: 15px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    cursor: pointer;
+  }
+  
+  .select-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+  }
+  
+  /* Text Input Styles */
+  .text-input {
+    width: 100%;
+    max-width: 300px;
+    padding: 10px 15px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    font-size: 15px;
+  }
+  
+  .text-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+  }
+  
+  .input-with-button {
+    display: flex;
+    align-items: center;
+    max-width: 350px;
+  }
+  
+  .input-with-button .text-input {
+    flex: 1;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  
+  .input-button {
+    padding: 10px 15px;
+    background-color: var(--primary-color);
+    border: none;
+    color: white;
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .input-button:hover {
+    background-color: var(--primary-hover);
+  }
+  
+  /* Button Styles */
+  .settings-button {
+    padding: 10px 16px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-right: 10px;
+    margin-top: 10px;
+  }
+  
+  .settings-button:hover {
+    background-color: var(--primary-hover);
+  }
+  
+  .settings-button.danger {
+    background-color: var(--danger-color);
+  }
+  
+  .settings-button.danger:hover {
+    background-color: var(--danger-hover);
+  }
+  
+  .button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  
+  /* File Input Styles */
+  .file-input-wrapper {
+    position: relative;
+    display: inline-block;
+    margin-top: 10px;
+  }
+  
+  .file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+  
+  /* Settings Info Styles */
+  .settings-info {
+    margin-top: 30px;
+    padding: 15px;
+    background-color: var(--info-bg);
+    border-radius: 6px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  
+  .settings-info.warning {
+    background-color: var(--warning-bg);
+  }
+  
+  .settings-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+  }

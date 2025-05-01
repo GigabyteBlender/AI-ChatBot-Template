@@ -1,0 +1,118 @@
+/* src/components/Sidebar/ChatHistory.css */
+.chat-history {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: var(--spacing-lg);
+    overflow-y: auto;
+  }
+  
+  .chat-history h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-md);
+    padding: 0 var(--spacing-sm);
+  }
+  
+  .no-chats {
+    color: var(--color-text-secondary);
+    text-align: center;
+    font-size: 0.9rem;
+    padding: var(--spacing-md);
+  }
+  
+  #chat-history-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .chat-history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-xs);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .chat-history-item:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  
+  .chat-history-item.active {
+    background-color: rgba(37, 99, 235, 0.1);
+  }
+  
+  .chat-info {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .chat-title {
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-bottom: var(--spacing-xs);
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .chat-preview {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .chat-date {
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+    margin-top: var(--spacing-xs);
+  }
+  
+  .delete-chat-btn {
+    background: none;
+    border: none;
+    color: var(--color-text-secondary);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: var(--spacing-xs);
+    border-radius: var(--radius-sm);
+    opacity: 0.7;
+    transition: all 0.2s ease;
+  }
+  
+  .delete-chat-btn:hover {
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  
+  @media (max-width: 768px) {
+    .chat-history {
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .chat-history h3 {
+      font-size: 0.8rem;
+    }
+    
+    .chat-history-item {
+      padding: var(--spacing-xs) var(--spacing-sm);
+    }
+    
+    .chat-title {
+      font-size: 0.8rem;
+    }
+    
+    .chat-preview {
+      font-size: 0.7rem;
+    }
+}

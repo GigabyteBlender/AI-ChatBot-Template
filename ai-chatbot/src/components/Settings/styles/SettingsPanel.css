@@ -1,0 +1,100 @@
+.settings-panel {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+  }
+  
+  .settings-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+  }
+  
+  .back-button {
+    background: none;
+    border: none;
+    font-size: 16px;
+    color: var(--text-color);
+    cursor: pointer;
+    padding: 8px 12px;
+    margin-right: 15px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+  }
+  
+  .back-button:hover {
+    background-color: var(--hover-color);
+  }
+  
+  .settings-header h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+  }
+  
+  .settings-layout {
+    display: flex;
+    gap: 30px;
+  }
+  
+  .settings-sidebar {
+    flex: 0 0 220px;
+  }
+  
+  .settings-tabs {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .settings-tabs li {
+    padding: 12px 15px;
+    margin-bottom: 5px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+  }
+  
+  .settings-tabs li:hover {
+    background-color: var(--hover-color);
+  }
+  
+  .settings-tabs li.active {
+    background-color: var(--primary-color);
+    color: white;
+  }
+  
+  .settings-content {
+    flex: 1;
+    border-radius: 10px;
+    background-color: var(--card-bg);
+    padding: 25px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Responsive styles */
+  @media (max-width: 768px) {
+    .settings-layout {
+      flex-direction: column;
+    }
+    
+    .settings-sidebar {
+      flex: none;
+      margin-bottom: 20px;
+    }
+    
+    .settings-tabs {
+      display: flex;
+      overflow-x: auto;
+      padding-bottom: 10px;
+    }
+    
+    .settings-tabs li {
+      flex: 0 0 auto;
+      white-space: nowrap;
+      margin-right: 5px;
+      margin-bottom: 0;
+    }
+  }

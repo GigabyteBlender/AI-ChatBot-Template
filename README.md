@@ -4,10 +4,6 @@
 
 This project is a modern web-based chat interface that integrates with AI services through the OpenRouter API. The interface includes multiple interaction modes, a persistent chat history feature, and a customizable settings panel. It provides a complete chat application experience with all the features you would need.
 
-# AI Chatbot Interface
-
-![Chat Interface Example](img/example.jpg)
-
 ## Overview
 
 A comprehensive web-based chat interface that integrates with AI services through OpenRouter API. This application provides a professional, responsive interface with multiple AI models, persistent chat history, and customizable settings.

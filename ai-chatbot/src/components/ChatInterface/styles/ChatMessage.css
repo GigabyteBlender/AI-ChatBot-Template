@@ -1,0 +1,64 @@
+/* src/components/ChatInterface/styles/ChatMessage.css */
+.message {
+  padding: var(--spacing-md) var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+  border-radius: var(--radius-lg);
+  max-width: 100%;
+  position: relative;
+  line-height: 1.6;
+}
+
+.message.user {
+  background-color: var(--color-user-message);
+  border: 1px solid var(--color-border);
+  align-self: flex-end;
+}
+
+.message.bot {
+  background-color: var(--color-bot-message);
+  border: 1px solid var(--color-border);
+  align-self: flex-start;
+}
+
+.message pre {
+  background-color: #f3f4f6;
+  padding: var(--spacing-md);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  margin: var(--spacing-md) 0;
+}
+
+.message code {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.9em;
+  background-color: #f3f4f6;
+  padding: 0.2em 0.4em;
+  border-radius: var(--radius-sm);
+}
+
+.cursor {
+  display: inline-block;
+  width: 0.5em;
+  height: 1em;
+  background-color: var(--color-accent);
+  opacity: 0.7;
+  margin-left: 2px;
+  vertical-align: middle;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  from, to {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@media (max-width: 768px) {
+  .message {
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+  }
+}
