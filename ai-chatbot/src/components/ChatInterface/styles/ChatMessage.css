@@ -1,29 +1,45 @@
-/* src/components/ChatInterface/styles/ChatMessage.css */
-.message {
-  padding: var(--spacing-md) var(--spacing-lg);
-  margin-bottom: var(--spacing-md);
-  border-radius: var(--radius-lg);
-  margin-left: 10%;
-  margin-right: 10%;
-  max-width: 100%;
+.message-row {
+  display: flex;
+  padding: 14px 20px;
+  width: 100%;
   position: relative;
-  line-height: 1.6;
-  box-shadow: var(--shadow-sm);
 }
 
-.message.user {
+.message-row:last-child {
+  border-bottom: none;
+}
+
+.message-row.user {
+  background-color: transparent;
+  justify-content: flex-end;
+}
+
+.message-row.bot {
+  background-color: transparent;
+  border-bottom: 1px solid var(--color-border);
+  justify-content: flex-start;
+}
+
+.message-content {
+  line-height: 1.5;
+  font-size: 1rem;
+  max-width: 100%; /* Limit width of message bubbles */
+}
+
+/* Bot message styling - no bubble */
+.message-row.bot .message-content {
+  color: var(--color-text);
+}
+
+/* User message styling - with bubble */
+.message-row.user .message-content {
   background-color: var(--color-user-message);
-  border: 1px solid var(--color-border);
-  align-self: flex-end;
+  padding: 12px 16px;
+  border-radius: 12px;
+  position: relative;
 }
 
-.message.bot {
-  background-color: var(--color-bot-message);
-  border: 1px solid var(--color-border);
-  align-self: flex-start;
-}
-
-.message pre {
+.message-content pre {
   background-color: #27272a;
   padding: var(--spacing-md);
   border-radius: var(--radius-sm);
@@ -32,7 +48,7 @@
   color: #e4e4e7;
 }
 
-.message code {
+.message-content code {
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   font-size: 0.9em;
   background-color: #27272a;
@@ -52,17 +68,6 @@
 }
 
 @keyframes blink {
-  from, to {
-    opacity: 0;
-  }
-  50% {
-    opacity: 0.7;
-  }
-}
-
-@media (max-width: 768px) {
-  .message {
-    padding: var(--spacing-md);
-    margin-bottom: var(--spacing-sm);
-  }
+  from, to { opacity: 0; }
+  50% { opacity: 0.7; }
 }

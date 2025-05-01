@@ -20,8 +20,6 @@ const ChatPage = () => {
       // Auto-close sidebar on mobile
       if (mobile && sidebarOpen) {
         setSidebarOpen(false);
-      } else if (!mobile && !sidebarOpen) {
-        setSidebarOpen(true);
       }
     };
 
@@ -34,14 +32,6 @@ const ChatPage = () => {
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
-
-  // Optional: Redirect to login if auth is required
-  // Uncomment this if you want to require login
-  /*
-  if (!currentUser) {
-    return <Navigate to="/auth" replace />;
-  }
-  */
 
   return (
     <div className="chat-page">

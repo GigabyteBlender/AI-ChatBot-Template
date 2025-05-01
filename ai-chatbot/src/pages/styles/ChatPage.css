@@ -1,4 +1,3 @@
-
 .chat-page {
   display: flex;
   height: 100%;
@@ -14,22 +13,18 @@
   overflow: hidden;
 }
 
-.main-content.sidebar-open {
-  margin-left: 0px; /* Width of sidebar */
-}
-
 .menu-toggle {
   position: fixed;
   top: 10px;
   left: 10px;
   z-index: 100;
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
+  background-color: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
-  width: 40px;
-  height: 40px;
-  font-size: 1.5rem;
+  width: 32px;
+  height: 32px;
+  font-size: 1.2rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -38,7 +33,7 @@
 }
 
 .menu-toggle:hover {
-  background-color: var(--primary-color-dark);
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 @media (max-width: 767px) {

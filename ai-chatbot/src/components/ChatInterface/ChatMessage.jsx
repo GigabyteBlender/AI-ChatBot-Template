@@ -8,7 +8,6 @@ const ChatMessage = ({ message, displaySpeed }) => {
   // Function to convert markdown code blocks to HTML
   const formatContent = (content) => {
     // Simple markdown code block formatting (``` code ```)
-    // You can expand this to handle more markdown features if needed
     let formattedContent = content.replace(
       /```([\s\S]*?)```/g, 
       '<pre><code>$1</code></pre>'
@@ -51,13 +50,12 @@ const ChatMessage = ({ message, displaySpeed }) => {
     setFullyDisplayed(false);
     
     // Calculate how many characters to show per interval
-    // to complete within a reasonable time
     const contentLength = message.content.length;
     let charsPerInterval = 1;
     
     // For longer messages, increase the speed
     if (contentLength > 500) {
-      charsPerInterval = Math.ceil(contentLength / 500); // Show entire message in about ~10 seconds max
+      charsPerInterval = Math.ceil(contentLength / 500);
     }
     
     let index = 0;
@@ -76,18 +74,20 @@ const ChatMessage = ({ message, displaySpeed }) => {
   }, [message, displaySpeed]);
 
   return (
-    <div className={`message ${message.type}`}>
-      {message.type === 'user' ? (
-        <span>{displayedContent}</span>
-      ) : (
-        <div 
-          className="bot-content"
-          dangerouslySetInnerHTML={{ __html: formatContent(displayedContent) }}
-        />
-      )}
-      {!fullyDisplayed && message.type === 'bot' && (
-        <span className="cursor"></span>
-      )}
+    <div className={`message-row ${message.type}`}>
+      <div className="message-content">
+        {message.type === 'user' ? (
+          <span>{displayedContent}</span>
+        ) : (
+          <div 
+            className="bot-content"
+            dangerouslySetInnerHTML={{ __html: formatContent(displayedContent) }}
+          />
+        )}
+        {!fullyDisplayed && message.type === 'bot' && (
+          <span className="cursor"></span>
+        )}
+      </div>
     </div>
   );
 };

@@ -33,19 +33,21 @@ const ChatInterface = () => {
         ref={chatContainerRef}
         style={{ fontSize: `${settings.interface.fontSize}px` }}
       >
-        {messages.map(message => (
-          <ChatMessage 
-            key={message.id} 
-            message={message} 
-            displaySpeed={settings.chat.displaySpeed} 
-          />
-        ))}
-        
-        {loading && (
-          <div className="loading-indicator">
-            <div className="spinner"></div>
-          </div>
-        )}
+        <div className="chat-content-wrapper">
+          {messages.map(message => (
+            <ChatMessage 
+              key={message.id} 
+              message={message} 
+              displaySpeed={settings.chat.displaySpeed} 
+            />
+          ))}
+          
+          {loading && (
+            <div className="loading-indicator">
+              <div className="spinner"></div>
+            </div>
+          )}
+        </div>
       </div>
       
       <InputContainer />

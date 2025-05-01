@@ -10,9 +10,9 @@ const InputContainer = () => {
   // Auto-resize textarea based on content
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = '0px';
+      textareaRef.current.style.height = '52px'; // Set initial height
       const scrollHeight = textareaRef.current.scrollHeight;
-      textareaRef.current.style.height = scrollHeight + 'px';
+      textareaRef.current.style.height = Math.max(52, scrollHeight) + 'px';
     }
   }, [input]);
 
@@ -21,6 +21,11 @@ const InputContainer = () => {
     if (input.trim() && !loading) {
       sendChatMessage(input.trim());
       setInput('');
+      
+      // Reset height after sending
+      if (textareaRef.current) {
+        textareaRef.current.style.height = '52px';
+      }
     }
   };
 

@@ -1,19 +1,18 @@
-/* src/components/Sidebar/Sidebar.css */
 .sidebar {
-  width: 280px;
+  width: 260px;
   height: 100vh;
   background-color: var(--color-sidebar);
   border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
-  padding: var(--spacing-md);
+  padding: 14px;
   overflow-y: auto;
   transition: transform 0.3s ease;
   box-shadow: var(--shadow-md);
 }
 
 .sidebar h1 {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 600;
   margin-bottom: var(--spacing-lg);
   color: var(--color-text);
@@ -22,22 +21,27 @@
 }
 
 .side-button {
-  padding: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
+  padding: 10px;
   border-radius: var(--radius-md);
   font-weight: 500;
   text-align: center;
   transition: all 0.2s ease;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .new-chat {
-  background-color: var(--color-accent);
-  color: white;
-  border: none;
+  background-color: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  margin-bottom: 20px;
 }
 
 .new-chat:hover {
-  background-color: var(--color-accent-hover);
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .auth-button {
@@ -49,6 +53,18 @@
 
 .auth-button:hover {
   background-color: rgba(255, 255, 255, 0.05);
+}
+
+.close-sidebar {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 24px;
+  cursor: pointer;
+  z-index: 5;
 }
 
 @media (max-width: 768px) {
@@ -67,12 +83,12 @@
   }
   
   .sidebar h1 {
-    font-size: 1.1rem;
-    margin-bottom: var(--spacing-md);
+    font-size: 1rem;
+    margin-bottom: 12px;
   }
   
   .side-button {
-    padding: var(--spacing-sm);
-    margin-bottom: var(--spacing-sm);
+    padding: 8px;
+    font-size: 0.8rem;
   }
 }

@@ -1,19 +1,28 @@
-/* src/components/ChatInterface/styles/InputContainer.css */
+.input-container-wrapper {
+  position: relative;
+  padding: 10px 0;
+  background-color: var(--color-background);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .input-container {
   display: flex;
   align-items: flex-end;
-  padding: var(--spacing-md) var(--spacing-lg);
-  background-color: var(--color-background);
-  border-top: 1px solid var(--color-border);
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 10px 20px;
   position: relative;
-  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
 }
 
 #userInput {
   flex: 1;
-  min-height: 48px;
+  min-height: 90px; /* Taller input box */
   max-height: 200px;
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: 14px 50px 14px 15px; /* Increased vertical padding */
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   resize: none;
@@ -22,6 +31,8 @@
   transition: border-color 0.2s ease;
   overflow-y: auto;
   line-height: 1.5;
+  box-shadow: 0 0 15px rgba(0,0,0,0.1);
+  font-size: 1rem; /* Slightly larger font */
 }
 
 #userInput:focus {
@@ -35,18 +46,17 @@
 }
 
 #submitBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 60px;
-  height: 100%;
-  margin-left: var(--spacing-sm);
+  position: absolute;
+  right: 30px;
+  bottom: 55px; /* Adjusted for the taller input */
   background-color: var(--color-accent);
   color: white;
   border: none;
-  border-radius: var(--radius-lg);
-  font-weight: 500;
+  border-radius: 6px;
   transition: background-color 0.2s ease;
+  padding: 8px 16px;
+  font-weight: 500;
+  font-size: 0.9rem;
 }
 
 #submitBtn:hover:not(:disabled) {
@@ -54,23 +64,36 @@
 }
 
 #submitBtn:disabled {
-  background-color: #4b5563;
+  background-color: var(--color-border);
   cursor: not-allowed;
   opacity: 0.7;
 }
 
+.input-footer {
+  max-width: 800px;
+  width: 100%;
+  padding: 10px 20px;
+  text-align: center;
+}
+
+.disclaimer {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+}
+
 @media (max-width: 768px) {
   .input-container {
-    padding: var(--spacing-sm);
+    padding: 8px 16px;
   }
   
   #userInput {
-    padding: var(--spacing-sm);
-    min-height: 40px;
+    padding: 12px 45px 12px 12px;
+    min-height: 90px;
   }
   
   #submitBtn {
-    min-width: 50px;
-    height: 38px;
+    right: 24px;
+    bottom: 55px;
+    padding: 6px 12px;
   }
 }
