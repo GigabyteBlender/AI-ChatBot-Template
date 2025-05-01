@@ -50,7 +50,7 @@ ai-chatbot/
 ### Installation
 
 ```
-git clone https://github.com/your-username/ai-chatbot.git
+git clone https://github.com/GigabyteBlender/AI-Chatbot-Template.git
 cd ai-chatbot
 npm install
 ```
