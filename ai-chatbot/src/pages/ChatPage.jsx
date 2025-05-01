@@ -16,7 +16,7 @@ const ChatPage = () => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      
+
       // Auto-close sidebar on mobile
       if (mobile && sidebarOpen) {
         setSidebarOpen(false);
@@ -27,7 +27,7 @@ const ChatPage = () => {
 
     window.addEventListener('resize', handleResize);
     handleResize(); // Initial check
-    
+
     return () => window.removeEventListener('resize', handleResize);
   }, [sidebarOpen]);
 
@@ -45,23 +45,23 @@ const ChatPage = () => {
 
   return (
     <div className="chat-page">
-      <Sidebar 
-        isMobile={isMobile} 
-        sidebarOpen={sidebarOpen} 
-        toggleSidebar={toggleSidebar} 
+      <Sidebar
+        isMobile={isMobile}
+        sidebarOpen={sidebarOpen}
+        toggleSidebar={toggleSidebar}
       />
-      
+
       <div className={`main-content ${sidebarOpen ? 'sidebar-open' : ''}`}>
         {isMobile && (
-          <button 
-            className="menu-toggle" 
+          <button
+            className="menu-toggle"
             onClick={toggleSidebar}
             aria-label="Toggle menu"
           >
             {sidebarOpen ? '×' : '☰'}
           </button>
         )}
-        
+
         <ChatInterface />
       </div>
     </div>
