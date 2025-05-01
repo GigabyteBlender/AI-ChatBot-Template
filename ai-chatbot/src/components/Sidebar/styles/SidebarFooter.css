@@ -1,47 +1,48 @@
 /* src/components/Sidebar/SidebarFooter.css */
 .sidebar-footer {
-    margin-top: var(--spacing-md);
-    padding-top: var(--spacing-md);
-    border-top: 1px solid var(--color-border);
-    font-size: 0.8rem;
-    color: var(--color-text-secondary);
-    text-align: center;
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.footer-links {
+  margin-bottom: var(--spacing-sm);
+}
+
+.footer-links a {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.separator {
+  margin: 0 var(--spacing-xs);
+}
+
+.footer-copyright {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+  .sidebar-footer {
+    margin-top: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
   }
   
   .footer-links {
-    margin-bottom: var(--spacing-sm);
-  }
-  
-  .footer-links a {
-    color: var(--color-text-secondary);
-    text-decoration: none;
-    transition: color 0.2s ease;
-  }
-  
-  .footer-links a:hover {
-    color: var(--color-accent);
-    text-decoration: underline;
-  }
-  
-  .separator {
-    margin: 0 var(--spacing-xs);
+    font-size: 0.7rem;
   }
   
   .footer-copyright {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
   }
-  
-  @media (max-width: 768px) {
-    .sidebar-footer {
-      margin-top: var(--spacing-sm);
-      padding-top: var(--spacing-sm);
-    }
-    
-    .footer-links {
-      font-size: 0.7rem;
-    }
-    
-    .footer-copyright {
-      font-size: 0.65rem;
-    }
-  }
+}

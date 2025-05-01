@@ -85,6 +85,22 @@ export const formatDate = (date, options = {}) => {
       return number.toString();
     }
   };
+
+  /**
+   * Format number of bytes to human-readable size
+   * @param {number} bytes - Number of bytes
+   * @param {number} decimals - Number of decimal places
+   * @returns {string} - Formatted file size
+   */
+  export const formatFileSize = (bytes, decimals = 2) => {
+    if (bytes === 0) return '0 Bytes';
+    
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i];
+  };
   
   /**
    * Format bytes into a human-readable string

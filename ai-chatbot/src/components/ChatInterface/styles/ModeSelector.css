@@ -6,6 +6,8 @@
   padding: var(--spacing-md) var(--spacing-lg);
   background-color: var(--color-background);
   border-bottom: 1px solid var(--color-border);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1;
 }
 
 .mode-container {
@@ -27,7 +29,7 @@
 .mode-container select:focus {
   outline: none;
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
 }
 
 .action-buttons {
@@ -40,25 +42,24 @@
   border-radius: var(--radius-md);
   font-size: 0.9rem;
   transition: all 0.2s ease;
-  background-color: white;
+  background-color: var(--color-input-bg);
+  color: var(--color-text);
 }
 
 #clearBtn {
   border: 1px solid var(--color-border);
-  color: var(--color-text);
 }
 
 #clearBtn:hover {
-  background-color: #f3f4f6;
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 #settingsBtn {
   border: 1px solid var(--color-border);
-  background-color: var(--color-input-bg);
 }
 
 #settingsBtn:hover {
-  background-color: #f3f4f6;
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 @media (max-width: 768px) {

@@ -6,6 +6,7 @@
   max-width: 100%;
   position: relative;
   line-height: 1.6;
+  box-shadow: var(--shadow-sm);
 }
 
 .message.user {
@@ -21,17 +22,18 @@
 }
 
 .message pre {
-  background-color: #f3f4f6;
+  background-color: #27272a;
   padding: var(--spacing-md);
   border-radius: var(--radius-sm);
   overflow-x: auto;
   margin: var(--spacing-md) 0;
+  color: #e4e4e7;
 }
 
 .message code {
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   font-size: 0.9em;
-  background-color: #f3f4f6;
+  background-color: #27272a;
   padding: 0.2em 0.4em;
   border-radius: var(--radius-sm);
 }
