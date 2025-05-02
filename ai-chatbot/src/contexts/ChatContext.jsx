@@ -153,32 +153,7 @@ export const ChatProvider = ({ children }) => {
 		setLoading(true);
 
 		try {
-			// Get the model from settings
-			const selectedModel = settings.api.model === 'custom'
-				? settings.api.customModel
-				: settings.api.model;
-
-			// Prepare the conversation history for the API request
-			const conversationHistory = messages.map(msg => ({
-				role: msg.type === 'user' ? 'user' : 'assistant',
-				content: msg.content
-			}));
-
-			// Add the new user message
-			conversationHistory.push({
-				role: 'user',
-				content: message
-			});
-
-			// Prepare the API request payload
-			const payload = {
-				model: selectedModel,
-				messages: conversationHistory,
-				temperature: settings.chat.temperature,
-				max_tokens: 1000,
-			};
-
-			// Get your API key (in a real app, use environment variables)
+			// Get your API key from localStorage
 			const apiKey = localStorage.getItem('apiKey') || '';
 
 			if (!apiKey) {
@@ -187,33 +162,70 @@ export const ChatProvider = ({ children }) => {
 				return;
 			}
 
-			// Make the API request
+			// Get the model from settings
+			const selectedModel = settings.api.model;
+
+			// Prepare the conversation history - limit to last 10 messages to avoid token limit issues
+			const recentMessages = messages.slice(-10).map(msg => ({
+				role: msg.type === 'user' ? 'user' : 'assistant',
+				content: msg.content
+			}));
+
+			// Add the new user message
+			recentMessages.push({
+				role: 'user',
+				content: message
+			});
+
+			// Prepare the API request payload for OpenRouter
+			const payload = {
+				model: selectedModel,
+				messages: recentMessages,
+				temperature: settings.chat.temperature || 0.7,
+				max_tokens: 2000  // Increase max tokens to handle longer responses
+			};
+
+			// Make the API request to OpenRouter
 			const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 					'Authorization': `Bearer ${apiKey}`,
 					'HTTP-Referer': window.location.origin, // Required by OpenRouter
+					'X-Title': 'Chat Application' // Optional for OpenRouter rankings
 				},
 				body: JSON.stringify(payload)
 			});
 
 			if (!response.ok) {
 				const errorData = await response.json();
-				throw new Error(errorData.error?.message || 'API request failed');
+				console.error("API Error Response:", errorData);
+				throw new Error(errorData.error?.message || `API request failed with status ${response.status}`);
 			}
 
 			const data = await response.json();
+			console.log("API Response:", data); // For debugging
 
-			// Extract the assistant's response
-			const assistantResponse = data.choices?.[0]?.message?.content ||
-				"I'm sorry, but I couldn't generate a response.";
-
-			// Add the bot's response to the chat
-			addMessage(assistantResponse, 'bot');
+			// Extract the assistant's response, with improved error handling
+			if (data.choices && data.choices.length > 0 && data.choices[0].message) {
+				const assistantResponse = data.choices[0].message.content;
+				// Add the bot's response to the chat
+				addMessage(assistantResponse, 'bot');
+			} else {
+				// Handle the case where the response structure is unexpected
+				console.error("Unexpected API response structure:", data);
+				addMessage("I'm sorry, but I received an unexpected response format. Please try again.", 'bot');
+			}
 		} catch (error) {
 			console.error("API Error:", error);
-			addMessage(`Error: ${error.message || "I'm sorry, but I encountered an error processing your request. Please try again."}`, 'bot');
+			
+			// Create a user-friendly error message
+			let errorMessage = "An error occurred while processing your request.";
+			if (error.message) {
+				errorMessage = error.message;
+			}
+			
+			addMessage(`Error: ${errorMessage}`, 'bot');
 		} finally {
 			setLoading(false);
 		}

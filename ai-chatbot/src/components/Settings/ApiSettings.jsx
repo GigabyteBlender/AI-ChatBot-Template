@@ -50,7 +50,8 @@ const ApiSettings = () => {
 					onChange={handleModelChange}
 					className="select-control"
 				>
-					<option value="deepseek/deepseek-chat:free">DeepSeek V3</option>
+					<option value="deepseek/deepseek-prover-v2:free">DeepSeek V2</option>
+					<option value="deepseek/deepseek-v3-base:free">DeepSeek V3</option>
 				</select>
 			</div>
 
