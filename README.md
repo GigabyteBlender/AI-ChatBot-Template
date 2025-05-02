@@ -1,12 +1,12 @@
-# 🤖 AI Chatbot
+# Simple AI-Chatbot Template
 
 <div align="center">
 
 ![AI Chatbot Banner](https://placehold.co/800x400/1a1a2e/FFFFFF?text=AI+Chatbot)
 
-A powerful, feature-rich AI chatbot application with a modern React frontend. Create engaging conversational experiences with advanced state management, user authentication, and a customizable interface.
+A simple, feature-rich AI chatbot application with a modern React frontend. Create engaging conversational experiences with advanced state management, user authentication, and a customizable interface.
 
-![License: MIT](LICENSE)
+[![License: MIT](https://img.shields.io/badge/copyright-License-blue)](LICENSE)
 [![React](https://img.shields.io/badge/React-18.x-61DAFB?logo=react)](https://reactjs.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Node.js CI](https://img.shields.io/badge/build-passing-brightgreen)]()
@@ -33,57 +33,60 @@ A powerful, feature-rich AI chatbot application with a modern React frontend. Cr
 
 ```
 ai-chatbot/
-├── node_modules/
-├── public/
-├── src/
-│   ├── components/
-│   │   ├── Auth/
-│   │   │   ├── styles/
-│   │   │   ├── LoginForm.jsx
-│   │   │   ├── RegisterForm.jsx
-│   │   │   └── ResetPasswordForm.jsx
+├── node_modules/        # Dependencies installed via npm/yarn
+├── public/              # Static assets and HTML template
+├── src/                 # Source code for the application
+│   ├── components/      # Reusable UI components
+│   │   ├── Auth/        # Authentication-related components
+│   │   │   ├── styles/      # Component-specific styles for auth
+│   │   │   ├── LoginForm.jsx         # User login interface
+│   │   │   ├── RegisterForm.jsx      # New user registration 
+│   │   │   └── ResetPasswordForm.jsx # Password recovery
 │   │   │
-│   │   ├── ChatInterface/
-│   │   │   ├── styles/
-│   │   │   ├── ChatInterface.jsx
-│   │   │   ├── ChatMessage.jsx
-│   │   │   ├── InputContainer.jsx
-│   │   │   └── ModeSelector.jsx
+│   │   ├── ChatInterface/            # Main chat functionality
+│   │   │   ├── styles/               # Chat-specific styles
+│   │   │   ├── ChatInterface.jsx     # Primary chat container
+│   │   │   ├── ChatMessage.jsx       # Individual message bubbles
+│   │   │   ├── InputContainer.jsx    # User input and controls
+│   │   │   └── ModeSelector.jsx      # Chat mode toggle options
 │   │   │
-│   │   ├── Settings/
-│   │   │   ├── styles/
-│   │   │   ├── ApiSettings.jsx
-│   │   │   ├── ChatSettings.jsx
-│   │   │   ├── DataSettings.jsx
-│   │   │   ├── InterfaceSettings.jsx
-│   │   │   └── SettingsPanel.jsx
+│   │   ├── Settings/                 # Application settings panels
+│   │   │   ├── styles/               # Settings-specific styles
+│   │   │   ├── ApiSettings.jsx       # API connection configuration
+│   │   │   ├── ChatSettings.jsx      # Chat behavior settings
+│   │   │   ├── DataSettings.jsx      # Data handling preferences
+│   │   │   ├── InterfaceSettings.jsx # UI customization options
+│   │   │   └── SettingsPanel.jsx     # Main settings container
 │   │   │
-│   │   └── Sidebar/
+│   │   └── Sidebar/                  # Navigation sidebar components
 │   │
-│   ├── contexts/
-│   │   ├── AuthContext.jsx
-│   │   ├── ChatContext.jsx
-│   │   └── SettingsContext.jsx
+│   ├── contexts/                     # React Context API providers
+│   │   ├── AuthContext.jsx           # Authentication state management
+│   │   ├── ChatContext.jsx           # Chat data and state management
+│   │   └── SettingsContext.jsx       # User preferences state
 │   │
-│   ├── pages/
-│   │   ├── styles/
-│   │   ├── AuthPage.jsx
-│   │   ├── ChatPage.jsx
-│   │   └── SettingsPage.jsx
+│   ├── pages/                        # Top-level route components
+│   │   ├── styles/                   # Page-specific styles
+│   │   ├── AuthPage.jsx              # Authentication page (login/register)
+│   │   ├── ChatPage.jsx              # Main chat interface page
+│   │   └── SettingsPage.jsx          # Settings configuration page
 │   │
-│   ├── styles/
-│   │   └── global.css
+│   ├── styles/                       # Global styles
+│   │   └── global.css                # App-wide styling rules
 │   │
-│   ├── utils/
-│   │   ├── formatters.js
-│   │   └── validators.js
+│   ├── utils/                        # Helper functions
+│   │   ├── formatters.js             # Data formatting utilities
+│   │   └── validators.js             # Input validation functions
 │   │
-│   ├── App.css
-│   ├── App.jsx
-│   ├── index.css
-│   └── index.jsx
-├── package-lock.json
-├── package.json
+│   ├── App.css                       # App component styles
+│   ├── App.jsx                       # Main application component
+│   ├── index.css                     # Entry point styles
+│   └── index.jsx                     # Application entry point
+│
+├── .gitignore                        # Git ignored files/directories
+├── package-lock.json                 # Dependency lock file
+├── package.json                      # Project metadata and dependencies
+└── README.md                         # Project documentation
 ```
 
 ---
