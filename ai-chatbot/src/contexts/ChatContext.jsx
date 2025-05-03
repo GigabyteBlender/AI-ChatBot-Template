@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { SettingsContext } from './SettingsContext';
 
@@ -9,21 +9,40 @@ export const ChatProvider = ({ children }) => {
 	const [chatHistory, setChatHistory] = useState([]);
 	const [currentChatId, setCurrentChatId] = useState(null);
 	const [loading, setLoading] = useState(false);
+	const isInitializing = useRef(true);
 
 	const { settings } = useContext(SettingsContext);
 
+	// Initial load of chat history and handling first-time setup
 	useEffect(() => {
 		// Load chat history from localStorage
 		const storedHistory = localStorage.getItem('chatHistory');
-		if (storedHistory) {
-			setChatHistory(JSON.parse(storedHistory));
-		}
-
-		// Create a new chat if none exists
-		if (!currentChatId) {
-			createNewChat();
+		const parsedHistory = storedHistory ? JSON.parse(storedHistory) : [];
+		
+		if (parsedHistory.length > 0) {
+			// If we have chat history, load it and set current chat to the most recent one
+			setChatHistory(parsedHistory);
+			const mostRecentChatId = parsedHistory[0].id;
+			setCurrentChatId(mostRecentChatId);
+			
+			// Load messages for the most recent chat
+			const storedMessages = localStorage.getItem(`chat_${mostRecentChatId}`);
+			if (storedMessages) {
+				setMessages(JSON.parse(storedMessages));
+			}
 		} else {
-			// Load messages for current chat
+			// If no chat history, create a new chat
+			const newChatId = createInitialChat();
+			setCurrentChatId(newChatId);
+		}
+		
+		isInitializing.current = false;
+	}, []);
+
+	// This effect handles loading messages when currentChatId changes
+	// but ONLY after initialization is complete
+	useEffect(() => {
+		if (!isInitializing.current && currentChatId) {
 			loadChat(currentChatId);
 		}
 	}, [currentChatId]);
@@ -35,119 +54,230 @@ export const ChatProvider = ({ children }) => {
 		}
 	}, [chatHistory]);
 
-	const createNewChat = () => {
+	// Creates the initial welcome message
+	const createWelcomeMessage = () => {
+		return {
+			id: uuidv4(),
+			type: 'bot',
+			content: 'Hello! How can I help you today?',
+			timestamp: Date.now()
+		};
+	};
+
+	// Creates a new chat but doesn't switch to it - used for initialization
+	const createInitialChat = () => {
 		const newChatId = uuidv4();
 		const newChat = {
 			id: newChatId,
-			title: 'New Chat',
+			title: `Chat ${newChatId.substring(0, 8)}`, // Use a portion of the UUID as initial title
 			timestamp: Date.now(),
 			preview: 'Start a new conversation'
 		};
 
+		const welcomeMessage = createWelcomeMessage();
+		
+		setChatHistory([newChat]);
+		setMessages([welcomeMessage]);
+		
+		// Save the welcome message to localStorage
+		localStorage.setItem(`chat_${newChatId}`, JSON.stringify([welcomeMessage]));
+		
+		return newChatId;
+	};
+
+	const createNewChat = () => {
+		const newChatId = uuidv4();
+		const newChat = {
+			id: newChatId,
+			title: `Chat ${newChatId.substring(0, 8)}`, // Use a portion of the UUID as initial title
+			timestamp: Date.now(),
+			preview: 'Start a new conversation'
+		};
+
+		const welcomeMessage = createWelcomeMessage();
+
+		// Update the chat history state with the new chat at the beginning
 		setChatHistory(prev => [newChat, ...prev]);
+		
+		// Set the current chat ID to the new chat
 		setCurrentChatId(newChatId);
-		setMessages([
-			{
-				id: uuidv4(),
-				type: 'bot',
-				content: 'Hello! How can I help you today?',
-				timestamp: Date.now()
-			}
-		]);
+		
+		// Set the welcome message
+		setMessages([welcomeMessage]);
+		
+		// Save the welcome message to localStorage
+		localStorage.setItem(`chat_${newChatId}`, JSON.stringify([welcomeMessage]));
 
 		return newChatId;
 	};
 
 	const loadChat = (chatId) => {
+		if (!chatId) return;
+		
+		// Set the current chat ID
+		setCurrentChatId(chatId);
+		
 		const storedMessages = localStorage.getItem(`chat_${chatId}`);
 		if (storedMessages) {
-			setMessages(JSON.parse(storedMessages));
+			// Mark all messages as not new responses when loading from history
+			const parsedMessages = JSON.parse(storedMessages);
+			const markedMessages = parsedMessages.map(msg => ({
+				...msg,
+				isNewResponse: false // Mark as not new when loading from history
+			}));
+			setMessages(markedMessages);
 		} else {
-			setMessages([
-				{
-					id: uuidv4(),
-					type: 'bot',
-					content: 'Hello! How can I help you today?',
-					timestamp: Date.now()
-				}
-			]);
+			// If no messages stored (shouldn't happen), create a welcome message
+			const welcomeMessage = {
+				...createWelcomeMessage(),
+				isNewResponse: false // Mark as not new when creating a welcome message for an existing chat
+			};
+			setMessages([welcomeMessage]);
+			localStorage.setItem(`chat_${chatId}`, JSON.stringify([welcomeMessage]));
 		}
-		setCurrentChatId(chatId);
+		
+		// Move the selected chat to the top of the chat history
+		setChatHistory(prev => {
+			// Find the selected chat
+			const selectedChat = prev.find(chat => chat.id === chatId);
+			// Filter out the selected chat
+			const otherChats = prev.filter(chat => chat.id !== chatId);
+			// Return a new array with the selected chat at the beginning
+			return selectedChat ? [selectedChat, ...otherChats] : prev;
+		});
 	};
 
-	const addMessage = (content, type = 'user') => {
+	const addMessage = (content, type = 'user', isNewResponse = true) => {
+		if (!currentChatId) return null;
+		
 		const newMessage = {
 			id: uuidv4(),
 			type,
 			content,
-			timestamp: Date.now()
+			timestamp: Date.now(),
+			isNewResponse: type === 'bot' ? isNewResponse : false // Only mark bot messages as new responses
 		};
 
-		setMessages(prev => [...prev, newMessage]);
+		// Update messages state
+		setMessages(prev => {
+			const updatedMessages = [...prev, newMessage];
+			
+			// Save messages to localStorage
+			localStorage.setItem(`chat_${currentChatId}`, JSON.stringify(updatedMessages));
+			
+			return updatedMessages;
+		});
 
-		// Update chat preview in history
+		// Update chat preview in history if it's a user message
 		if (type === 'user') {
 			updateChatPreview(currentChatId, content);
+			
+			// If this is the first user message, use it to name the chat
+			const currentMessages = messages;
+			if (currentMessages.length === 1 && currentMessages[0].type === 'bot') {
+				updateChatTitle(currentChatId, content);
+			}
 		}
-
-		// Save messages to localStorage
-		setTimeout(() => {
-			localStorage.setItem(`chat_${currentChatId}`, JSON.stringify([...messages, newMessage]));
-		}, 0);
 
 		return newMessage;
 	};
+	
+	const updateChatTitle = (chatId, content) => {
+		// Create a title from the first few words of the first user message
+		const titleWords = content.split(' ').slice(0, 4).join(' ');
+		const title = titleWords + (content.split(' ').length > 4 ? '...' : '');
+		
+		setChatHistory(prev => {
+			return prev.map(chat => 
+				chat.id === chatId ? { ...chat, title } : chat
+			);
+		});
+	};
 
 	const updateChatPreview = (chatId, preview) => {
-		setChatHistory(prev =>
-			prev.map(chat =>
+		setChatHistory(prev => {
+			const updatedHistory = prev.map(chat =>
 				chat.id === chatId
-					? { ...chat, preview: preview.substring(0, 30) + (preview.length > 30 ? '...' : ''), timestamp: Date.now() }
+					? { 
+						...chat, 
+						preview: preview.substring(0, 30) + (preview.length > 30 ? '...' : ''), 
+						timestamp: Date.now() 
+					}
 					: chat
-			)
-		);
+			);
+			
+			// Move the updated chat to the top of the list
+			const updatedChat = updatedHistory.find(chat => chat.id === chatId);
+			const otherChats = updatedHistory.filter(chat => chat.id !== chatId);
+			
+			return [updatedChat, ...otherChats];
+		});
 	};
 
 	const clearChat = () => {
-		setMessages([
-			{
-				id: uuidv4(),
-				type: 'bot',
-				content: 'Hello! How can I help you today?',
-				timestamp: Date.now()
-			}
-		]);
+		if (!currentChatId) return;
+		
+		const welcomeMessage = {
+			...createWelcomeMessage(),
+			isNewResponse: false // Mark as not new when clearing chat
+		};
+		
+		setMessages([welcomeMessage]);
 
 		// Update localStorage
-		localStorage.setItem(`chat_${currentChatId}`, JSON.stringify([
-			{
-				id: uuidv4(),
-				type: 'bot',
-				content: 'Hello! How can I help you today?',
-				timestamp: Date.now()
-			}
-		]));
+		localStorage.setItem(`chat_${currentChatId}`, JSON.stringify([welcomeMessage]));
 
-		// Update chat preview
+		// Update chat preview and reset title
 		updateChatPreview(currentChatId, 'Start a new conversation');
+		
+		// Reset the chat title to the default format
+		setChatHistory(prev => {
+			return prev.map(chat => 
+				chat.id === currentChatId ? { 
+					...chat, 
+					title: `Chat ${currentChatId.substring(0, 8)}` 
+				} : chat
+			);
+		});
 	};
 
 	const deleteChat = (chatId) => {
 		// Remove chat from history
-		setChatHistory(prev => prev.filter(chat => chat.id !== chatId));
+		setChatHistory(prev => {
+			const updatedHistory = prev.filter(chat => chat.id !== chatId);
+			
+			// If we deleted all chats, create a new one
+			if (updatedHistory.length === 0) {
+				const newChatId = createInitialChat();
+				setCurrentChatId(newChatId);
+				return [{
+					id: newChatId,
+					title: 'New Chat',
+					timestamp: Date.now(),
+					preview: 'Start a new conversation'
+				}];
+			}
+			
+			return updatedHistory;
+		});
 
 		// Remove chat messages from localStorage
 		localStorage.removeItem(`chat_${chatId}`);
 
-		// If current chat was deleted, create a new one
+		// If current chat was deleted, switch to the first available chat
 		if (currentChatId === chatId) {
-			createNewChat();
+			setChatHistory(prev => {
+				if (prev.length > 0) {
+					setCurrentChatId(prev[0].id);
+				}
+				return prev;
+			});
 		}
 	};
 
 	const sendChatMessage = async (message) => {
 		// Add user message
-		addMessage(message, 'user');
+		addMessage(message, 'user', true);
 
 		// Set loading state
 		setLoading(true);
@@ -157,7 +287,7 @@ export const ChatProvider = ({ children }) => {
 			const apiKey = localStorage.getItem('apiKey') || '';
 
 			if (!apiKey) {
-				addMessage("Please add your API key in settings.", 'bot');
+				addMessage("Please add your API key in settings.", 'bot', true);
 				setLoading(false);
 				return;
 			}
@@ -204,17 +334,16 @@ export const ChatProvider = ({ children }) => {
 			}
 
 			const data = await response.json();
-			console.log("API Response:", data); // For debugging
 
 			// Extract the assistant's response, with improved error handling
 			if (data.choices && data.choices.length > 0 && data.choices[0].message) {
 				const assistantResponse = data.choices[0].message.content;
-				// Add the bot's response to the chat
-				addMessage(assistantResponse, 'bot');
+				// Add the bot's response to the chat, marking it as a new response to enable the typewriter effect
+				addMessage(assistantResponse, 'bot', true);
 			} else {
 				// Handle the case where the response structure is unexpected
 				console.error("Unexpected API response structure:", data);
-				addMessage("I'm sorry, but I received an unexpected response format. Please try again.", 'bot');
+				addMessage("I'm sorry, but I received an unexpected response format. Please try again.", 'bot', true);
 			}
 		} catch (error) {
 			console.error("API Error:", error);
@@ -225,7 +354,7 @@ export const ChatProvider = ({ children }) => {
 				errorMessage = error.message;
 			}
 			
-			addMessage(`Error: ${errorMessage}`, 'bot');
+			addMessage(`Error: ${errorMessage}`, 'bot', true);
 		} finally {
 			setLoading(false);
 		}

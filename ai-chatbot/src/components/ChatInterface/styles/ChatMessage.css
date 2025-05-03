@@ -16,19 +16,19 @@
 
 .message-row.bot {
   background-color: transparent;
-  /* Removed border-bottom: 1px solid var(--color-border); */
   justify-content: flex-start;
 }
 
 .message-content {
   line-height: 1.5;
   font-size: 1rem;
-  max-width: 100%; /* Limit width of message bubbles */
+  max-width: 100%;
 }
 
 /* Bot message styling - no bubble */
 .message-row.bot .message-content {
   color: var(--color-text);
+  width: 100%; /* Full width for bot messages to accommodate tables, etc. */
 }
 
 /* User message styling - with bubble */

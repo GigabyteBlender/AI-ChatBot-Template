@@ -38,14 +38,14 @@ const ChatMessage = ({ message, displaySpeed }) => {
     };
 
     useEffect(() => {
-        // If it's a user message, show it immediately
-        if (message.type === 'user') {
+        // If it's a user message or a message that's not new (loaded from history), show it immediately
+        if (message.type === 'user' || message.isNewResponse === false) {
             setDisplayedContent(message.content);
             setFullyDisplayed(true);
             return;
         }
 
-        // For bot messages, implement typewriter effect
+        // For new bot messages, implement typewriter effect
         setDisplayedContent('');
         setFullyDisplayed(false);
 
