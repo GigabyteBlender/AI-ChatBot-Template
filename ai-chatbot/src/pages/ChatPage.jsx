@@ -1,6 +1,5 @@
 // src/pages/ChatPage.jsx
 import React, { useState, useEffect, useContext } from 'react';
-import { Navigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
 import Sidebar from '../components/Sidebar/Sidebar';
 import ChatInterface from '../components/ChatInterface/ChatInterface';

@@ -36,9 +36,7 @@ If you believe you've found a security vulnerability in our project, please foll
 
 ### API Key Security
 
-- Never commit your OpenRouter API key to public repositories.
-- Update the `config.js` file with your API key only on your local development environment.
-- Consider using environment variables for API keys in production environments.
+- Never commit your API key to public repositories.
 
 ### Local Storage Security
 
