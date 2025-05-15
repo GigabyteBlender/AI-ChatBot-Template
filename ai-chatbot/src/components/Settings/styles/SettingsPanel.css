@@ -1,100 +1,233 @@
 .settings-panel {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-    min-height: 100vh;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: var(--text-color);
+  cursor: pointer;
+  padding: 8px 12px;
+  margin-right: 15px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.back-button:hover {
+  background-color: var(--hover-color);
+}
+
+.settings-header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.settings-layout {
+  display: flex;
+  gap: 30px;
+  flex: 1;
+}
+
+.settings-sidebar {
+  flex: 0 0 220px;
+}
+
+.settings-tabs {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  position: sticky;
+  top: 20px; /* Stick the tabs while scrolling */
+}
+
+.settings-tabs li {
+  padding: 12px 15px;
+  margin-bottom: 5px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.settings-tabs li:hover {
+  background-color: var(--hover-color);
+}
+
+.settings-tabs li.active {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.settings-content {
+  flex: 1;
+  border-radius: 10px;
+  background-color: var(--card-bg);
+  padding: 25px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  min-height: 500px; /* Set minimum height to prevent content jumping */
+  overflow-y: auto; /* Allow scrolling for content that exceeds min-height */
+  position: relative; /* Create positioning context for absolute children if needed */
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .settings-panel {
+    padding: 30px;
+    max-width: 98%;
+    min-height: auto;
   }
   
   .settings-header {
+    margin-bottom: 15px;
+    width: 100%;
     display: flex;
-    align-items: center;
-    margin-bottom: 30px;
-  }
-  
-  .back-button {
-    background: none;
-    border: none;
-    font-size: 16px;
-    color: var(--text-color);
-    cursor: pointer;
-    padding: 8px 12px;
-    margin-right: 15px;
-    border-radius: 4px;
-    transition: background-color 0.3s;
-  }
-  
-  .back-button:hover {
-    background-color: var(--hover-color);
+    flex-direction: column;
+    align-items: flex-start;
   }
   
   .settings-header h1 {
-    margin: 0;
-    font-size: 24px;
-    font-weight: 600;
+    font-size: 20px;
+    margin-top: 8px;
+    width: 100%;
+  }
+  
+  .back-button {
+    margin-bottom: 0;
+    padding: 5px 10px;
+    font-size: 14px;
   }
   
   .settings-layout {
-    display: flex;
-    gap: 30px;
+    flex-direction: column;
+    min-height: unset;
+    gap: 15px;
   }
   
   .settings-sidebar {
-    flex: 0 0 220px;
+    flex: none;
+    margin-bottom: 10px;
+    width: 100%;
   }
   
+  /* Make tabs fixed at the top */
   .settings-tabs {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+    display: flex;
+    position: static;
+    background-color: var(--card-bg);
+    padding: 8px;
+    border-radius: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    scrollbar-width: none; /* Hide scrollbar in Firefox */
+    /* Add horizontal scroll indicator */
+    background-image: linear-gradient(to right, var(--card-bg) 80%, transparent 100%);
+    background-size: 15px 100%;
+    background-repeat: no-repeat;
+    background-position: right;
+    margin: 0 5px; /* Add margin from edges */
+  }
+  
+  .settings-tabs::-webkit-scrollbar {
+    display: none; /* Hide scrollbar in Chrome/Safari */
   }
   
   .settings-tabs li {
-    padding: 12px 15px;
-    margin-bottom: 5px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: background-color 0.2s;
-  }
-  
-  .settings-tabs li:hover {
-    background-color: var(--hover-color);
-  }
-  
-  .settings-tabs li.active {
-    background-color: var(--primary-color);
-    color: white;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    margin-right: 5px;
+    margin-bottom: 0;
+    padding: 8px 12px;
+    font-size: 13px;
+    border-radius: 4px;
   }
   
   .settings-content {
-    flex: 1;
-    border-radius: 10px;
-    background-color: var(--card-bg);
-    padding: 25px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    min-height: unset;
+    padding: 18px;
+    margin: 0 5px 50px 5px; /* Add margin from edges and bottom */
+    border-radius: 8px;
   }
   
-  /* Responsive styles */
-  @media (max-width: 768px) {
-    .settings-layout {
-      flex-direction: column;
-    }
-    
-    .settings-sidebar {
-      flex: none;
-      margin-bottom: 20px;
-    }
-    
-    .settings-tabs {
-      display: flex;
-      overflow-x: auto;
-      padding-bottom: 10px;
-    }
-    
-    .settings-tabs li {
-      flex: 0 0 auto;
-      white-space: nowrap;
-      margin-right: 5px;
-      margin-bottom: 0;
-    }
+  /* Make form elements full width on mobile but with margins */
+  .setting-group {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    padding-left: 5px;
+    padding-right: 5px;
   }
+  
+  .setting-group .text-input,
+  .setting-group .select-control,
+  .setting-group .input-with-button {
+    max-width: calc(100% - 10px);
+    width: calc(100% - 10px);
+  }
+  
+  /* Range control specific spacing */
+  .range-control {
+    padding: 0 5px;
+  }
+  
+  /* Settings info box with margin */
+  .settings-info {
+    margin: 20px 5px;
+    padding: 15px;
+    border-radius: 8px;
+  }
+  
+  /* Make buttons larger for touch but with margins */
+  .input-button,
+  .settings-button {
+    padding: 12px 16px;
+    min-height: 44px; /* Minimum touch target size */
+    margin: 5px;
+  }
+}
+
+/* For very small screens */
+@media (max-width: 480px) {
+  .settings-panel {
+    padding: 10px;
+  }
+  
+  .settings-header h1 {
+    font-size: 18px;
+  }
+  
+  .settings-tabs li {
+    padding: 8px 10px;
+    font-size: 12px;
+    min-width: 70px; /* Ensure reasonable tap target */
+    text-align: center;
+  }
+  
+  /* Improve API section layout */
+  .input-with-button {
+    flex-direction: column;
+    align-items: stretch;
+    margin: 0 5px;
+  }
+  
+  .input-with-button .text-input {
+    border-radius: 6px;
+    margin-bottom: 8px;
+    width: 100%;
+  }
+  
+  .input-button {
+    border-radius: 6px;
+    width: calc(100% - 10px);
+  }
+}
