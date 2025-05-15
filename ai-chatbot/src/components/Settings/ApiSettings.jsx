@@ -52,7 +52,6 @@ const ApiSettings = () => {
 				>
 					<option value="deepseek/deepseek-prover-v2:free">DeepSeek V2</option>
 					<option value="deepseek/deepseek-chat-v3-0324:free">DeepSeek V3</option>
-					<option value="google/gemini-2.5-pro-exp-03-25">Gemini 2.5 Pro (experimental)</option>
 				</select>
 			</div>
 
