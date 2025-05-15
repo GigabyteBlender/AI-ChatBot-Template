@@ -6,19 +6,22 @@ import ChatInterface from '../components/ChatInterface/ChatInterface';
 import './styles/ChatPage.css';
 
 const ChatPage = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
+  const [isMobile, setIsMobile] = useState(false);
   const { currentUser } = useContext(AuthContext);
 
-  // Handle window resize for responsive design
+  // Detect screen size and update isMobile
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
 
       // Auto-close sidebar on mobile
-      if (mobile && sidebarOpen) {
+      if (mobile) {
         setSidebarOpen(false);
+      } else {
+        // Default to open on desktop
+        setSidebarOpen(true);
       }
     };
 
@@ -26,10 +29,10 @@ const ChatPage = () => {
     handleResize(); // Initial check
 
     return () => window.removeEventListener('resize', handleResize);
-  }, [sidebarOpen]);
+  }, []);
 
   const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
+    setSidebarOpen((prev) => !prev);
   };
 
   return (
@@ -40,17 +43,25 @@ const ChatPage = () => {
         toggleSidebar={toggleSidebar}
       />
 
-      <div className={`main-content ${sidebarOpen ? 'sidebar-open' : ''}`}>
-        {isMobile && (
-          <button
-            className="menu-toggle"
-            onClick={toggleSidebar}
-            aria-label="Toggle menu"
-          >
-            {sidebarOpen ? '×' : '☰'}
-          </button>
-        )}
+      {/* Overlay for closing sidebar on mobile */}
+      {isMobile && sidebarOpen && (
+        <div
+          className="sidebar-overlay"
+          onClick={toggleSidebar}
+          aria-hidden="true"
+        />
+      )}
 
+      {/* Toggle button for both mobile and desktop */}
+      <button
+        className={`menu-toggle ${isMobile ? 'mobile' : 'desktop'}`}
+        onClick={toggleSidebar}
+        aria-label="Toggle menu"
+      >
+        {sidebarOpen ? '×' : '☰'}
+      </button>
+
+      <div className={`main-content ${sidebarOpen && !isMobile ? 'sidebar-open' : ''}`}>
         <ChatInterface />
       </div>
     </div>

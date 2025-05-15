@@ -12,6 +12,7 @@
 .mode-container {
   display: flex;
   align-items: center;
+  margin-left: 30px;;
 }
 
 .mode-container select {
