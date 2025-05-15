@@ -2,17 +2,29 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 10px;
+  padding: 10px 20px;
   background-color: var(--color-background);
   z-index: 1;
   margin: 0 auto;
   width: 100%;
+  transition: margin-left 0.3s ease; /* Add smooth transition */
+}
+
+/* When sidebar is open, adjust position */
+.sidebar-open .mode-selector {
+  margin-left: 0px;
 }
 
 .mode-container {
   display: flex;
   align-items: center;
-  margin-left: 40px;
+  margin-left: 35px;
+  transition: margin-left 0.3s ease; /* Add smooth transition */
+}
+
+/* When sidebar is open, reduce left margin */
+.sidebar-open .mode-container {
+  margin-left: 0px;
 }
 
 .mode-container select {
@@ -34,7 +46,7 @@
 
 .action-buttons {
   display: flex;
-  gap: 10px; /* Add space between buttons */
+  gap: 15px; /* Add space between buttons */
 }
 
 .icon {

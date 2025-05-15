@@ -98,21 +98,19 @@
 
 .sidebar-toggle-button {
   position: fixed;
-  top: 11px;
+  top: 7px;
   left: 215px;
   z-index: 1004;
-  background-color: var(--color-sidebar);
-  border: 1px solid var(--color-border);
-  color: var(--color-text);
-  border-radius: 6px;
-  width: 32px;
-  height: 32px;
-  font-size: 1.25rem;
+  background-color: transparent;
+  border: none;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: left 0.3s ease, background-color 0.2s;
+  transition: left 0.3s ease;
+  padding: 0;
 }
 
 /* Position toggle button when sidebar is closed */
@@ -121,7 +119,14 @@
 }
 
 .sidebar-toggle-button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  opacity: 0.8;
+}
+
+.sidebar-toggle-icon {
+  width: 33px;
+  height: 33px;
+  display: block; /* Prevent inline spacing issues */
+  object-fit: contain;
 }
 
 /* Sidebar overlay (mobile only, appears when sidebar is open) - moved from ChatPage.css */

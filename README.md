@@ -79,11 +79,6 @@ ai-chatbot/
 │   ├── App.jsx                       # Main application component
 │   ├── index.css                     # Entry point styles
 │   └── index.jsx                     # Application entry point
-│
-├── .gitignore                        # Git ignored files/directories
-├── package-lock.json                 # Dependency lock file
-├── package.json                      # Project metadata and dependencies
-└── README.md                         # Project documentation
 ```
 
 ---

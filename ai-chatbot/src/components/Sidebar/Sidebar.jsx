@@ -5,6 +5,8 @@ import { ChatContext } from '../../contexts/ChatContext';
 import ChatHistory from './ChatHistory';
 import SidebarFooter from './SidebarFooter';
 import './styles/Sidebar.css';
+import openSidebarIcon from './images/sidebar-button-open.png';  // Import your open sidebar icon
+import closeSidebarIcon from './images/sidebar-button-closed.png'; // Import your close sidebar icon
 
 const Sidebar = ({ isMobile, sidebarOpen, toggleSidebar }) => {
 	const { currentUser, logout } = useContext(AuthContext);
@@ -30,13 +32,17 @@ const Sidebar = ({ isMobile, sidebarOpen, toggleSidebar }) => {
 
 	return (
 		<>
-			{/* Sidebar Toggle Button - moved from ChatPage */}
+			{/* Sidebar Toggle Button - with images */}
 			<button
 				className={`sidebar-toggle-button ${isMobile ? 'mobile' : 'desktop'} ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}
 				onClick={toggleSidebar}
 				aria-label="Toggle sidebar"
 			>
-				{sidebarOpen ? '×' : '☰'}
+				<img 
+					src={sidebarOpen ? closeSidebarIcon : openSidebarIcon} 
+					alt={sidebarOpen ? "Close sidebar" : "Open sidebar"} 
+					className="sidebar-toggle-icon" 
+				/>
 			</button>
 			
 			{/* Overlay for closing sidebar on mobile */}
