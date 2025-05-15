@@ -17,7 +17,7 @@ const defaultSettings = {
 		storageLimit: 25 // max number of chats
 	},
 	api: {
-		model: "deepseek/deepseek-prover-v2:free",
+		model: "deepseek/deepseek-chat-v3-0324:free",
 	}
 };
 

@@ -15,17 +15,14 @@ A simple, feature-rich AI chatbot application with a modern React frontend. Crea
 
 ---
 
-## ✨ Features
+## Features
 
 - **💬 Advanced Chat Interface** - Fluid, responsive conversations with AI with support for markdown, code syntax highlighting, and media embeds
-- **🔒 Secure User Authentication** - Complete user authentication flow with JWT, social logins, and password recovery
 - **📚 Persistent History** - Save, categorize, and search through past conversations
 - **⚙️ Extensive Customization** - Personalize themes, behavior, API connections, and conversation parameters
 - **📱 Cross-Platform Design** - Optimized experience across desktop, tablet, and mobile devices
 - **🧩 Modular Architecture** - Built with reusable components for easy extension and customization
 - **🔌 API Integration** - Ready to connect with OpenAI, Anthropic, or your custom AI backend
-- **🌐 Internationalization** - Support for multiple languages (extensible)
-- **🌙 Dark/Light Mode** - Toggle between visual themes for any environment
 
 ---
 

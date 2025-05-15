@@ -25,7 +25,6 @@ const ModeSelector = ({ onClear }) => {
 					onChange={handleModelChange}
 					aria-label="Select AI model"
 				>
-					<option value="deepseek/deepseek-prover-v2:free">DeepSeek V2</option>
 					<option value="deepseek/deepseek-chat-v3-0324:free">DeepSeek V3</option>
 				</select>
 			</div>

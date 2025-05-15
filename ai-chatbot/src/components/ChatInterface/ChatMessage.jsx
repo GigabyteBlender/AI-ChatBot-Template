@@ -1,59 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import './styles/ChatMessage.css';
+import { marked } from 'marked';
+import hljs from 'highlight.js';
 
 const ChatMessage = ({ message, displaySpeed }) => {
     const [displayedContent, setDisplayedContent] = useState('');
     const [fullyDisplayed, setFullyDisplayed] = useState(false);
 
-    // Function to convert markdown code blocks to HTML
+    // Configure marked with syntax highlighting
+    marked.setOptions({
+        breaks: true,
+        highlight: function (code, lang) {
+            return hljs.highlightAuto(code, [lang]).value;
+        },
+    });
+
+    // Convert markdown to HTML with syntax highlighting
     const formatContent = (content) => {
-        // Simple markdown code block formatting (``` code ```)
-        let formattedContent = content.replace(
-            /```([\s\S]*?)```/g,
-            '<pre><code>$1</code></pre>'
-        );
-
-        // Format bold text
-        formattedContent = formattedContent.replace(
-            /\*\*(.*?)\*\*/g,
-            '<strong>$1</strong>'
-        );
-
-        // Format italic text
-        formattedContent = formattedContent.replace(
-            /\*(.*?)\*/g,
-            '<em>$1</em>'
-        );
-
-        // Format links
-        formattedContent = formattedContent.replace(
-            /\[(.*?)\]\((.*?)\)/g,
-            '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
-        );
-
-        // Add line breaks
-        formattedContent = formattedContent.replace(/\n/g, '<br>');
-
-        return formattedContent;
+        return marked(content);
     };
 
     useEffect(() => {
-        // If it's a user message or a message that's not new (loaded from history), show it immediately
         if (message.type === 'user' || message.isNewResponse === false) {
             setDisplayedContent(message.content);
             setFullyDisplayed(true);
             return;
         }
 
-        // For new bot messages, implement typewriter effect
         setDisplayedContent('');
         setFullyDisplayed(false);
 
-        // Calculate how many characters to show per interval
         const contentLength = message.content.length;
         let charsPerInterval = 1;
-
-        // For longer messages, increase the speed
         if (contentLength > 500) {
             charsPerInterval = Math.ceil(contentLength / 500);
         }
@@ -80,7 +58,7 @@ const ChatMessage = ({ message, displaySpeed }) => {
                     <span>{displayedContent}</span>
                 ) : (
                     <div
-                        className="bot-content"
+                        className="bot-content markdown-body"
                         dangerouslySetInnerHTML={{ __html: formatContent(displayedContent) }}
                     />
                 )}
