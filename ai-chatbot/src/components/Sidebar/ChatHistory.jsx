@@ -20,11 +20,6 @@ const ChatHistory = ({ isMobile, toggleSidebar }) => {
 		}
 	};
 
-	const formatDate = (timestamp) => {
-		const date = new Date(timestamp);
-		return date.toLocaleDateString();
-	};
-
 	return (
 		<div className="chat-history">
 			<h3>Recent Chats</h3>
@@ -41,7 +36,6 @@ const ChatHistory = ({ isMobile, toggleSidebar }) => {
 							<div className="chat-info">
 								<span className="chat-title">{chat.title}</span>
 								<span className="chat-preview">{chat.preview}</span>
-								<span className="chat-date">{formatDate(chat.timestamp)}</span>
 							</div>
 							<button
 								className="delete-chat-btn"

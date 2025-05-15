@@ -77,6 +77,8 @@
   padding: 25px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   min-height: 500px; /* Set minimum height to prevent content jumping */
+  width: auto;
+  max-width: 700px;
   overflow-y: auto; /* Allow scrolling for content that exceeds min-height */
   position: relative; /* Create positioning context for absolute children if needed */
 }

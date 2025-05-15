@@ -5,14 +5,14 @@
   border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
-  padding: 14px;
+  padding: 16px;
   overflow-y: auto;
   transition: transform 0.3s ease;
-  box-shadow: var(--shadow-md);
-  position: fixed; /* Position fixed to overlay content properly */
+  position: fixed;
   top: 0;
   left: 0;
-  z-index: 1003; /* Above overlay */
+  z-index: 1003;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
 }
 
 /* Desktop sidebar */
@@ -33,7 +33,7 @@
 /* Mobile sidebar */
 @media (max-width: 768px) {
   .sidebar {
-    width: 240px; /* Slightly narrower on mobile */
+    width: 260px;
     transform: translateX(-100%); /* Hidden by default */
   }
 
@@ -96,19 +96,18 @@
   background-color: rgba(255, 255, 255, 0.05);
 }
 
-/* Moved from ChatPage.css - Toggle button styles */
 .sidebar-toggle-button {
   position: fixed;
-  top: 10px;
+  top: 11px;
   left: 215px;
-  z-index: 1004; /* Above sidebar (1003) */
-  background-color: transparent;
-  color: var(--color-text);
+  z-index: 1004;
+  background-color: var(--color-sidebar);
   border: 1px solid var(--color-border);
-  border-radius: 4px;
+  color: var(--color-text);
+  border-radius: 6px;
   width: 32px;
   height: 32px;
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -116,15 +115,9 @@
   transition: left 0.3s ease, background-color 0.2s;
 }
 
-@media (max-width: 768px) {
-  .sidebar-toggle-button {
-    left: 195px; /* Adjust for mobile */
-  }
-}
-
 /* Position toggle button when sidebar is closed */
 .sidebar-toggle-button.sidebar-closed {
-  left: 10px;
+  left: 8px;
 }
 
 .sidebar-toggle-button:hover {
