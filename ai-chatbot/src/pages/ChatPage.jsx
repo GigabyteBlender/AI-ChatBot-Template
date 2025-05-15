@@ -43,24 +43,6 @@ const ChatPage = () => {
         toggleSidebar={toggleSidebar}
       />
 
-      {/* Overlay for closing sidebar on mobile */}
-      {isMobile && sidebarOpen && (
-        <div
-          className="sidebar-overlay"
-          onClick={toggleSidebar}
-          aria-hidden="true"
-        />
-      )}
-
-      {/* Toggle button for both mobile and desktop */}
-      <button
-        className={`menu-toggle ${isMobile ? 'mobile' : 'desktop'}`}
-        onClick={toggleSidebar}
-        aria-label="Toggle menu"
-      >
-        {sidebarOpen ? '×' : '☰'}
-      </button>
-
       <div className={`main-content ${sidebarOpen && !isMobile ? 'sidebar-open' : ''}`}>
         <ChatInterface />
       </div>

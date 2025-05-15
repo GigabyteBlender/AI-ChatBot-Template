@@ -29,24 +29,44 @@ const Sidebar = ({ isMobile, sidebarOpen, toggleSidebar }) => {
 	};
 
 	return (
-		<div className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
-			<h1>AI Chatbot</h1>
-			<button className="side-button new-chat" onClick={handleNewChat}>
-				New Chat
-			</button>
-
-			<ChatHistory isMobile={isMobile} toggleSidebar={toggleSidebar} />
-
+		<>
+			{/* Sidebar Toggle Button - moved from ChatPage */}
 			<button
-				id="auth-button"
-				className="side-button auth-button"
-				onClick={handleAuthClick}
+				className={`sidebar-toggle-button ${isMobile ? 'mobile' : 'desktop'} ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}
+				onClick={toggleSidebar}
+				aria-label="Toggle sidebar"
 			>
-				{currentUser ? 'Logout' : 'Login / Register'}
+				{sidebarOpen ? '×' : '☰'}
 			</button>
+			
+			{/* Overlay for closing sidebar on mobile */}
+			{isMobile && sidebarOpen && (
+				<div
+					className="sidebar-overlay"
+					onClick={toggleSidebar}
+					aria-hidden="true"
+				/>
+			)}
+			
+			<div className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+				<h1>AI Chatbot</h1>
+				<button className="side-button new-chat" onClick={handleNewChat}>
+					New Chat
+				</button>
 
-			<SidebarFooter />
-		</div>
+				<ChatHistory isMobile={isMobile} toggleSidebar={toggleSidebar} />
+
+				<button
+					id="auth-button"
+					className="side-button auth-button"
+					onClick={handleAuthClick}
+				>
+					{currentUser ? 'Logout' : 'Login / Register'}
+				</button>
+
+				<SidebarFooter />
+			</div>
+		</>
 	);
 };
 
