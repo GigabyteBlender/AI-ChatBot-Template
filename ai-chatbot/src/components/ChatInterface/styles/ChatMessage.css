@@ -22,7 +22,19 @@
 .message-content {
   line-height: 1.5;
   font-size: 1rem;
-  max-width: 100%;
+  max-width: 800px;
+  /* Added to ensure all message content is contained */
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+/* User specific text container */
+.user-text-content {
+  display: block;
+  max-width: 100%; /* Ensure content doesn't exceed container */
+  white-space: pre-wrap; /* Preserve whitespace but allow wrapping */
 }
 
 /* Bot message styling - no bubble */
@@ -37,6 +49,7 @@
   padding: 12px 16px;
   border-radius: 12px;
   position: relative;
+  max-width: 80%; /* Limit width for user messages */
 }
 
 .message-content pre {
@@ -54,6 +67,9 @@
   line-height: 1.6;
   font-size: 16px;
   color: var(--color-text);
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 /* Headers */
@@ -182,19 +198,15 @@
     visibility: hidden;
   }
 }
-/* Cursor animation */
-.cursor {
-  display: inline-block;
-  width: 0.5em;
-  height: 1em;
-  background-color: var(--color-accent);
-  opacity: 0.7;
-  margin-left: 2px;
-  vertical-align: middle;
-  animation: blink 1s step-end infinite;
-}
 
 @keyframes blink {
   from, to { opacity: 0; }
   50% { opacity: 0.7; }
+}
+
+/* Media queries for responsive design */
+@media screen and (max-width: 768px) {
+  .message-row.user .message-content {
+    max-width: 100%; /* Slightly wider on mobile */
+  }
 }

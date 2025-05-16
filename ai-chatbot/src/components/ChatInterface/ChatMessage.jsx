@@ -67,15 +67,12 @@ const ChatMessage = ({ message, displaySpeed }) => {
         <div className={`message-row ${message.type}`}>
             <div className="message-content">
                 {message.type === 'user' ? (
-                    <span>{displayedContent}</span>
+                    <span className="user-text-content">{displayedContent}</span>
                 ) : (
                     <div
                         className="bot-content markdown-body"
                         dangerouslySetInnerHTML={{ __html: formatContent(displayedContent) }}
                     />
-                )}
-                {!fullyDisplayed && message.type === 'bot' && (
-                    <span className="cursor"></span>
                 )}
             </div>
         </div>
