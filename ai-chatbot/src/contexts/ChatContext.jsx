@@ -60,7 +60,8 @@ export const ChatProvider = ({ children }) => {
 			id: uuidv4(),
 			type: 'bot',
 			content: 'Hello! How can I help you today?',
-			timestamp: Date.now()
+			timestamp: Date.now(),
+			isNewResponse: false // Welcome messages are never "new responses"
 		};
 	};
 
@@ -119,18 +120,18 @@ export const ChatProvider = ({ children }) => {
 		
 		const storedMessages = localStorage.getItem(`chat_${chatId}`);
 		if (storedMessages) {
-			// Mark all messages as not new responses when loading from history
+			// Ensure all messages are marked as not new responses when loading from history
 			const parsedMessages = JSON.parse(storedMessages);
 			const markedMessages = parsedMessages.map(msg => ({
 				...msg,
-				isNewResponse: false // Mark as not new when loading from history
+				isNewResponse: false // Mark all messages as not new when loading from history
 			}));
 			setMessages(markedMessages);
 		} else {
 			// If no messages stored (shouldn't happen), create a welcome message
 			const welcomeMessage = {
 				...createWelcomeMessage(),
-				isNewResponse: false // Mark as not new when creating a welcome message for an existing chat
+				isNewResponse: false
 			};
 			setMessages([welcomeMessage]);
 			localStorage.setItem(`chat_${chatId}`, JSON.stringify([welcomeMessage]));
@@ -147,7 +148,7 @@ export const ChatProvider = ({ children }) => {
 		});
 	};
 
-	const addMessage = (content, type = 'user', isNewResponse = true) => {
+	const addMessage = (content, type = 'user', isNewResponse = false) => {
 		if (!currentChatId) return null;
 		
 		const newMessage = {
@@ -155,7 +156,7 @@ export const ChatProvider = ({ children }) => {
 			type,
 			content,
 			timestamp: Date.now(),
-			isNewResponse: type === 'bot' ? isNewResponse : false // Only mark bot messages as new responses
+			isNewResponse // Use the provided isNewResponse flag
 		};
 
 		// Update messages state
@@ -163,7 +164,12 @@ export const ChatProvider = ({ children }) => {
 			const updatedMessages = [...prev, newMessage];
 			
 			// Save messages to localStorage
-			localStorage.setItem(`chat_${currentChatId}`, JSON.stringify(updatedMessages));
+			// IMPORTANT: When saving to localStorage, mark the message as not new
+			const messagesToSave = updatedMessages.map(msg => ({
+				...msg,
+				isNewResponse: false // Always save messages with isNewResponse as false
+			}));
+			localStorage.setItem(`chat_${currentChatId}`, JSON.stringify(messagesToSave));
 			
 			return updatedMessages;
 		});
@@ -219,7 +225,7 @@ export const ChatProvider = ({ children }) => {
 		
 		const welcomeMessage = {
 			...createWelcomeMessage(),
-			isNewResponse: false // Mark as not new when clearing chat
+			isNewResponse: false
 		};
 		
 		setMessages([welcomeMessage]);
@@ -277,7 +283,7 @@ export const ChatProvider = ({ children }) => {
 
 	const sendChatMessage = async (message) => {
 		// Add user message
-		addMessage(message, 'user', true);
+		addMessage(message, 'user', false); // User messages don't need the typewriter effect
 
 		// Set loading state
 		setLoading(true);
@@ -287,7 +293,7 @@ export const ChatProvider = ({ children }) => {
 			const apiKey = localStorage.getItem('apiKey') || '';
 
 			if (!apiKey) {
-				addMessage("Please add your API key in settings.", 'bot', true);
+				addMessage("Please add your API key in settings.", 'bot', true); // Error messages should appear immediately
 				setLoading(false);
 				return;
 			}
@@ -339,7 +345,7 @@ export const ChatProvider = ({ children }) => {
 			if (data.choices && data.choices.length > 0 && data.choices[0].message) {
 				const assistantResponse = data.choices[0].message.content;
 				// Add the bot's response to the chat, marking it as a new response to enable the typewriter effect
-				addMessage(assistantResponse, 'bot', true);
+				addMessage(assistantResponse, 'bot', true); // Set isNewResponse to true for fresh API responses
 			} else {
 				// Handle the case where the response structure is unexpected
 				console.error("Unexpected API response structure:", data);
@@ -354,7 +360,7 @@ export const ChatProvider = ({ children }) => {
 				errorMessage = error.message;
 			}
 			
-			addMessage(`Error: ${errorMessage}`, 'bot', true);
+			addMessage(`Error: ${errorMessage}`, 'bot', true); // Error messages should appear immediately
 		} finally {
 			setLoading(false);
 		}

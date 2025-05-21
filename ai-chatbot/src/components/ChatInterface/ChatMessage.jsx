@@ -36,12 +36,16 @@ const ChatMessage = ({ message, displaySpeed }) => {
             clearInterval(intervalRef.current);
         }
 
-        if (message.type === 'user' || message.isNewResponse === false) {
+        // Skip typewriter effect if:
+        // 1. It's a user message, or
+        // 2. It's not a new response from the API (loaded from localStorage)
+        if (message.type === 'user' || !message.isNewResponse) {
             setDisplayedContent(message.content);
             setFullyDisplayed(true);
             return;
         }
 
+        // Only apply typewriter effect to bot messages with isNewResponse=true
         setDisplayedContent('');
         setFullyDisplayed(false);
 
