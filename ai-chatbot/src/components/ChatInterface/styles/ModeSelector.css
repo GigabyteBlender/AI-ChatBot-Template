@@ -46,7 +46,7 @@
 
 .action-buttons {
   display: flex;
-  gap: 15px; /* Add space between buttons */
+  gap: 10px; /* Add space between buttons */
 }
 
 .icon {
